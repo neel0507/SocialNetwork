@@ -12,5 +12,3 @@
 /comments CommentR POST
 
 /profile ProfileR GET
-/ HomeRR GET
-/ HomePageRR GET
