@@ -6,9 +6,11 @@
 
 /favicon.ico FaviconR GET
 /robots.txt RobotsR GET
+/mainimage.png MainImageR GET
 
 / HomeR GET POST
 
 /comments CommentR POST
 
 /profile ProfileR GET
+/home HomepageR GET

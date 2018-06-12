@@ -1,0 +1,49 @@
+div.bddiv {  
+         border: 1px solid black; 
+	 width:700px; 
+	 height:400px; 
+	 margin: auto;
+       }
+
+div.imgdiv { 
+         background-image: url(@{MainImageR});
+         background-repeat: no-repeat;
+	 height: 100px;
+         margin-left: 100px;
+       }
+
+div.title {
+	 text-align: center;
+         background-color: #eb8;
+	 font-family:helvetica;
+  	 font-size  :20pt;
+  	 padding    :4px;
+	 color      :#40d;
+       }
+
+div.info {
+  background :lightgreen;
+  color      :blue;
+  border     :1px solid green;
+  padding    :5px 10px;
+  margin-left:40px;
+  width:300px;
+}
+
+div.message { margin-left: 40px; }
+
+a:link  { text-decoration   :none;}
+a:hover { color             :#d04;}
+
+.menu li, .button {
+  display           :inline;
+  padding           :4px 6px;
+  border            :1px solid #777;
+  background        :#ddd;
+  margin-right      :8px;
+  border-radius     :5px;
+  -moz-box-shadow   :2px 2px 2px #888;
+  -webkit-box-shadow:2px 2px 2px #888;
+  box-shadow        :2px 2px 2px #888;
+}
+
