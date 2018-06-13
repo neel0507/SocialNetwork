@@ -15,6 +15,7 @@ module Foundation where
 import Import.NoFoundation
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
 import Text.Hamlet          (hamletFile)
+import Text.Lucius (luciusFile)
 import Text.Jasmine         (minifym)
 import Control.Monad.Logger (LogSource)
 
@@ -101,7 +102,9 @@ instance Yesod App where
 
     defaultLayout :: Widget -> Handler Html
     defaultLayout widget = do
-        pc <- widgetToPageContent $ do widget
+        pc <- widgetToPageContent $ do 
+           widget
+           toWidget $(luciusFile "templates/SNTemplates/defaultLayout.lucius")
         withUrlRenderer
          [hamlet|
             $doctype 5
@@ -109,8 +112,11 @@ instance Yesod App where
                 <head>
                     <title>Social Network                                                          
                     ^{pageHead pc} 
-                <body>                     
-                    ^{pageBody pc}            
+                <body>
+                    <div class="bddiv">
+                     <div class="imgdiv">
+                     <div class="title">Social Network                     
+                     ^{pageBody pc}            
         |]
 
     -- The page to be redirected to when authentication is required.
@@ -128,6 +134,10 @@ instance Yesod App where
     isAuthorized CommentR _ = return Authorized
     isAuthorized HomeR _ = return Authorized
     isAuthorized HomepageR _ = return Authorized
+    isAuthorized SignupR _ = return Authorized  
+    isAuthorized LoginpageR _ = return Authorized
+    isAuthorized MembersR _ = return Authorized
+    isAuthorized FriendsR _ = return Authorized  
     isAuthorized FaviconR _ = return Authorized
     isAuthorized MainImageR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized

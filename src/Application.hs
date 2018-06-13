@@ -44,7 +44,11 @@ import Handler.Common
 import Handler.Home
 import Handler.Comment
 import Handler.Profile
-import Handler.Homepage
+import Handler.SNHandlers.Homepage
+import Handler.SNHandlers.Signup
+import Handler.SNHandlers.Loginpage
+import Handler.SNHandlers.Members
+import Handler.SNHandlers.Friends
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the

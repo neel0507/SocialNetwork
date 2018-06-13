@@ -14,3 +14,7 @@
 
 /profile ProfileR GET
 /home HomepageR GET
+/signup SignupR GET POST
+/login LoginpageR GET POST
+/members MembersR GET POST
+/friends FriendsR GET

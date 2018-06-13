@@ -1,0 +1,17 @@
+.message { margin-left: 40px; }
+.memberlist { margin-left: 60px; }
+a:link  { text-decoration   :none;}
+a:hover { color             :#d04;}
+
+.menu li, .button {
+  display           :inline;
+  padding           :4px 6px;
+  border            :1px solid #777;
+  background        :#ddd;
+  margin-right      :8px;
+  border-radius     :5px;
+  -moz-box-shadow   :2px 2px 2px #888;
+  -webkit-box-shadow:2px 2px 2px #888;
+  box-shadow        :2px 2px 2px #888;
+}
+

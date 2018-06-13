@@ -1,0 +1,11 @@
+   <ul class="menu">
+        <li><a href=@{HomepageR}>Home </a>
+        <li><a href=@{SignupR}>Sign Up </a>
+        <li><a href=@{LoginpageR}>Log In </a>
+   <br>
+   <span class="info">&#8658; You must be logged in to view this page.
+   <br>   
+   <span class="message"><b>Please enter your details to sign up</b>   
+   <div class="userInput">Username <input type="text" name="username">   
+   <div class="userInput">Password &nbsp;<input type="text" name="password">
+   <div class="submit"><input type="submit">

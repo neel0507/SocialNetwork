@@ -1,0 +1,12 @@
+   <ul class="menu">
+        <li><a href=@{HomepageR}>Home </a>
+        <li><a href=@{SignupR}>Sign Up </a>
+        <li><a href=@{LoginpageR}>Log In </a>
+   <br>
+   <div class="message"><h2>You are Following</h2>
+   <ul class="memberlist">
+        <li>Member 1
+        <li>Member 2
+        <li>Member 3
+   <ul class="menu">
+        <li><a href=@{HomepageR}>View Your Messages </a>

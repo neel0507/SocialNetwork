@@ -1,0 +1,29 @@
+.info {
+  background :lightgreen;
+  color      :blue;
+  border     :1px solid green;
+  padding    :5px 10px;
+  margin-left:40px;  
+}
+
+.message { margin-left: 40px; }
+
+.userInput { margin-left: 40px; margin-top: 10px;}
+
+.submit {margin-left: 132px; margin-top: 5px;}
+
+a:link  { text-decoration   :none;}
+a:hover { color             :#d04;}
+
+.menu li, .button {
+  display           :inline;
+  padding           :4px 6px;
+  border            :1px solid #777;
+  background        :#ddd;
+  margin-right      :8px;
+  border-radius     :5px;
+  -moz-box-shadow   :2px 2px 2px #888;
+  -webkit-box-shadow:2px 2px 2px #888;
+  box-shadow        :2px 2px 2px #888;
+}
+

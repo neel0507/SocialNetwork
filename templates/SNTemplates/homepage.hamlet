@@ -1,0 +1,10 @@
+   <ul class="menu">
+        <li><a href=@{HomepageR}>Home </a>
+        <li><a href=@{MembersR}>Members </a>
+        <li><a href=@{FriendsR}>Friends </a>
+   <br>
+   <span class="info">&#8658; You must be logged in to view this page.
+   <br>
+   <br>
+   <br>
+   <div class="message">Welcome to social network, please sign up and/or log in to join in.

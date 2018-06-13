@@ -1,10 +1,11 @@
 {-# LANGUAGE QuasiQuotes, TemplateHaskell, OverloadedStrings, TypeFamilies, MultiParamTypeClasses #-}
 
-module Handler.Homepage where
+
+module Handler.SNHandlers.Friends where
 
 import Import
 
-getHomepageR :: Handler Html
-getHomepageR = do
+getFriendsR :: Handler Html
+getFriendsR = do
     defaultLayout $ do
-       $(widgetFile "pageTemplate")
+       $(widgetFile "SNTemplates/friends")

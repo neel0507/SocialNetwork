@@ -1,33 +1,9 @@
-div.bddiv {  
-         border: 1px solid black; 
-	 width:700px; 
-	 height:400px; 
-	 margin: auto;
-       }
-
-div.imgdiv { 
-         background-image: url(@{MainImageR});
-         background-repeat: no-repeat;
-	 height: 100px;
-         margin-left: 100px;
-       }
-
-div.title {
-	 text-align: center;
-         background-color: #eb8;
-	 font-family:helvetica;
-  	 font-size  :20pt;
-  	 padding    :4px;
-	 color      :#40d;
-       }
-
-div.info {
+.info {
   background :lightgreen;
   color      :blue;
   border     :1px solid green;
   padding    :5px 10px;
-  margin-left:40px;
-  width:300px;
+  margin-left:40px;  
 }
 
 div.message { margin-left: 40px; }

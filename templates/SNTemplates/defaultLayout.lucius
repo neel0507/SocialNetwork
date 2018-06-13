@@ -1,0 +1,27 @@
+* {
+  font-family:verdana,sans-serif;
+  font-size  :14pt;
+}
+
+div.bddiv {  
+         border: 1px solid black; 
+	 width:700px; 
+	 height:400px; 
+	 margin: auto;
+       }
+
+div.imgdiv { 
+         background-image: url(@{MainImageR});
+         background-repeat: no-repeat;
+	 height: 100px;
+         margin-left: 100px;
+       }
+
+div.title {
+	 text-align: center;
+         background-color: #eb8;
+	 font-family:helvetica;
+  	 font-size  :20pt;
+  	 padding    :4px;
+	 color      :#40d;
+       }
