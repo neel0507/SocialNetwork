@@ -15,7 +15,7 @@ module Foundation where
 import Import.NoFoundation
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
 import Text.Hamlet          (hamletFile)
-import Text.Lucius (luciusFile)
+import Text.Lucius          (luciusFile)
 import Text.Jasmine         (minifym)
 import Control.Monad.Logger (LogSource)
 
@@ -137,7 +137,10 @@ instance Yesod App where
     isAuthorized SignupR _ = return Authorized  
     isAuthorized LoginpageR _ = return Authorized
     isAuthorized MembersR _ = return Authorized
-    isAuthorized FriendsR _ = return Authorized  
+    isAuthorized FriendsR _ = return Authorized
+    isAuthorized MessagesR _ = return Authorized
+    isAuthorized SettingsR _ = return Authorized
+    isAuthorized LogoutpageR _ = return Authorized  
     isAuthorized FaviconR _ = return Authorized
     isAuthorized MainImageR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized

@@ -1,0 +1,19 @@
+   <ul class="menu">
+        <li><a href=@{HomepageR}>Home </a>
+        <li><a href=@{MembersR}>Members </a>
+        <li><a href=@{FriendsR}>Friends </a>
+        <li><a href=@{MessagesR}>Messages </a>
+        <li><a href=@{SettingsR}>Settings </a>
+        <li><a href=@{LogoutpageR}>Log Out </a>
+   <div class="message"><h2>Your Messages</h2>
+   <div class="message">Type here to leave a message:
+   <div class="message"><textarea rows="4" cols="40" style="resize: none;"></textarea>
+   <div class="message">
+      Public<input type="radio" name="messagetype" value="Public">
+      Private<input type="radio" name="messagetype" value="Private" Checked>
+      <input type="submit" name="messagetype"value="Post Message">
+   <br>
+   <span class="info">No messages yet
+   <br>
+   <ul class="menu">
+        <li><a href=@{HomepageR}>Refresh Your Messages </a>

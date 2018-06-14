@@ -6,10 +6,6 @@
         <li><a href=@{SettingsR}>Settings </a>
         <li><a href=@{LogoutpageR}>Log Out </a>
    <br>
-   <div class="message"><h2>You are Following</h2>
-   <ul class="memberlist">
-        <li>Member 1
-        <li>Member 2
-        <li>Member 3
-   <ul class="menu">
-        <li><a href=@{HomepageR}>View Your Messages </a>
+   <div class="message"><h2>Enter or edit your details:</h2>   
+   <div class="message"><textarea rows="4" cols="40" style="resize: none;"></textarea>
+   <div class="message"><input type="submit" name="messagetype"value="Save Profile">

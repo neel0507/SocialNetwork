@@ -34,6 +34,7 @@ getHomeR = do
         aDomId <- newIdent
         setTitle "Welcome To Yesod!"
         $(widgetFile "home")
+    redirect HomepageR
 
 postHomeR :: Handler Html
 postHomeR = do
