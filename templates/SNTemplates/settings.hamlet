@@ -7,5 +7,5 @@
         <li><a href=@{LogoutpageR}>Log Out </a>
    <br>
    <div class="message"><h2>Enter or edit your details:</h2>   
-   <div class="message"><textarea rows="4" cols="40" style="resize: none;"></textarea>
-   <div class="message"><input type="submit" name="messagetype"value="Save Profile">
+   <div class="message"><textarea id="txtarea" rows="4" cols="40" style="resize: none;"></textarea>
+   <div class="message"><input type="submit" value="Save Profile" onclick="validate()">

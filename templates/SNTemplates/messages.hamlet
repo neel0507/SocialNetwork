@@ -7,13 +7,13 @@
         <li><a href=@{LogoutpageR}>Log Out </a>
    <div class="message"><h2>Your Messages</h2>
    <div class="message">Type here to leave a message:
-   <div class="message"><textarea rows="4" cols="40" style="resize: none;"></textarea>
+   <div class="message"><textarea id="txtarea" rows="4" cols="40" style="resize: none;"></textarea>
    <div class="message">
       Public<input type="radio" name="messagetype" value="Public">
       Private<input type="radio" name="messagetype" value="Private" Checked>
-      <input type="submit" name="messagetype"value="Post Message">
+      <input type="submit" name="messagetype"value="Post Message" onclick="validate()">
    <br>
-   <span class="info">No messages yet
+   <span class="info" id="test">No messages yet
    <br>
    <ul class="menu">
-        <li><a href=@{HomepageR}>Refresh Your Messages </a>
+        <li><a href=@{MessagesR}>Refresh Your Messages </a>

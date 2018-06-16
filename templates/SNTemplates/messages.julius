@@ -1,0 +1,11 @@
+function validate()
+{
+    if(document.getElementById("txtarea").value.length == 0)
+    {
+       document.getElementById("txtarea").focus();
+    }
+    else
+    {
+       document.getElementById("test").style.display = "none";
+    }
+}
