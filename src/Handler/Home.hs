@@ -33,7 +33,7 @@ postHomeR = do
         submission = case result of
             FormSuccess res -> Just res
             _ -> Nothing
-    allComments <- runDB $ getAllComments
+    allComments <- liftHandler . runDB $ getAllComments
 
     defaultLayout $ do
         let (commentFormId, commentTextareaId, commentListId) = commentIds

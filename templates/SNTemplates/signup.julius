@@ -8,8 +8,9 @@ function validate()
     {
        document.getElementById("username").focus();
     }
-    if(document.getElementById("username").value.length > 0 && document.getElementById             ("password").value.length > 0) //to check for if the user has been created in the database and also if an existing user with the same name does not exist
-    {
-       window.location.replace("/login");   
-    }
+}
+
+function checkUsername()
+{
+    var username = document.getElementbyId("ident").value;
 }

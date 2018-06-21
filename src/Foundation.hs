@@ -224,16 +224,16 @@ instance YesodAuth App where
     redirectToReferer :: App -> Bool
     redirectToReferer _ = True
 
-    authenticate :: (MonadHandler m, HandlerSite m ~ App)
-                 => Creds App -> m (AuthenticationResult App)
-    authenticate creds = liftHandler $ runDB $ do
-        x <- getBy $ UniqueUser $ credsIdent creds
-        case x of
-            Just (Entity uid _) -> return $ Authenticated uid
-            Nothing -> Authenticated <$> insert User
-                { userIdent = credsIdent creds
-                , userPassword = Nothing
-                }
+    --authenticate :: (MonadHandler m, HandlerSite m ~ App)
+        --         => Creds App -> m (AuthenticationResult App)
+    --authenticate creds = liftHandler $ runDB $ do
+      --  x <- getBy $ UniqueUser $ credsIdent creds
+       -- case x of
+         --   Just (Entity uid _) -> return $ Authenticated uid
+          --  Nothing -> Authenticated <$> insert User
+              --  { userIdent = credsIdent creds
+              --  , userPassword = Nothing
+              --  }
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
