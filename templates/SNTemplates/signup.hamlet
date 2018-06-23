@@ -7,6 +7,6 @@
    <br>   
    <div class="message"><b>Please enter your details to sign up</b>
    <form method="POST" action="/signup">   
-    <div class="userInput">Username <input type="text" id="ident" name="ident" onblur="checkUsername()">   
+    <div class="userInput">Username <input type="text" id="ident" name="ident">   
     <div class="userInput">Password &nbsp;<input type="text" id="password" name="password">
-    <div class="submit"><input type="submit" name="submit" value="submit" onclick="validate()">
+    <div class="submit"><input id="submit" type="submit" name="submit" value="submit">

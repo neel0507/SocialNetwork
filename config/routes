@@ -21,3 +21,4 @@
 /messages MessagesR GET POST
 /settings SettingsR GET POST
 /logout LogoutpageR GET
+/json RegisterVerifyUserR PUT

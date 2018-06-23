@@ -14,7 +14,7 @@ module Foundation where
 
 import Import.NoFoundation
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
-import Text.Hamlet          (hamletFile)
+--import Text.Hamlet          (hamletFile)
 import Text.Lucius          (luciusFile)
 import Text.Jasmine         (minifym)
 import Control.Monad.Logger (LogSource)
@@ -26,8 +26,8 @@ import Yesod.Auth.OpenId    (authOpenId, IdentifierType (Claimed))
 import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
-import qualified Data.CaseInsensitive as CI
-import qualified Data.Text.Encoding as TE
+--import qualified Data.CaseInsensitive as CI
+--import qualified Data.Text.Encoding as TE
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -140,7 +140,8 @@ instance Yesod App where
     isAuthorized FriendsR _ = return Authorized
     isAuthorized MessagesR _ = return Authorized
     isAuthorized SettingsR _ = return Authorized
-    isAuthorized LogoutpageR _ = return Authorized  
+    isAuthorized LogoutpageR _ = return Authorized
+    isAuthorized RegisterVerifyUserR _ = return Authorized
     isAuthorized FaviconR _ = return Authorized
     isAuthorized MainImageR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
@@ -224,16 +225,16 @@ instance YesodAuth App where
     redirectToReferer :: App -> Bool
     redirectToReferer _ = True
 
-    --authenticate :: (MonadHandler m, HandlerSite m ~ App)
-        --         => Creds App -> m (AuthenticationResult App)
-    --authenticate creds = liftHandler $ runDB $ do
-      --  x <- getBy $ UniqueUser $ credsIdent creds
-       -- case x of
-         --   Just (Entity uid _) -> return $ Authenticated uid
-          --  Nothing -> Authenticated <$> insert User
-              --  { userIdent = credsIdent creds
-              --  , userPassword = Nothing
-              --  }
+    authenticate :: (MonadHandler m, HandlerSite m ~ App)
+                 => Creds App -> m (AuthenticationResult App)
+    authenticate creds = liftHandler $ runDB $ do
+        x <- getBy $ UniqueUser $ credsIdent creds
+        case x of
+            Just (Entity uid _) -> return $ Authenticated uid
+            Nothing -> Authenticated <$> insert User
+                { userIdent = credsIdent creds
+                , userPassword = ""
+                }
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
