@@ -24,7 +24,21 @@ postSignupR = do
           , userPassword = password
           }
          Just (Entity userId _) -> return userId
-    redirect SignupR
+    defaultLayout $ do
+      [whamlet|
+       <ul class="menu">
+        <li><a href=@{HomepageR}>Home </a>
+        <li><a href=@{LoginpageR}>Log In </a>
+        <li><a href=@{MembersR}>Members </a>
+        <li><a href=@{FriendsR}>Friends </a>
+        <li><a href=@{MessagesR}>Messages </a>
+        <li><a href=@{SettingsR}>Settings </a>
+        <li><a href=@{LogoutpageR}>Log Out </a>
+       <br>
+       <div class="message"><b>Welcome to Social Network, #{ident}</b>
+       <br>   
+       <div class="message"><b>Please enter your details to login</b>
+      |]
          
      
 

@@ -142,6 +142,7 @@ instance Yesod App where
     isAuthorized SettingsR _ = return Authorized
     isAuthorized LogoutpageR _ = return Authorized
     isAuthorized RegisterVerifyUserR _ = return Authorized
+    isAuthorized LoginVerifyUserR _ = return Authorized
     isAuthorized FaviconR _ = return Authorized
     isAuthorized MainImageR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
