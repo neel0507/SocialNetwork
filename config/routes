@@ -16,7 +16,7 @@
 /home HomepageR GET
 /signup SignupR GET POST
 /login LoginpageR GET POST
-/members MembersR GET POST
+/members MembersR GET
 /friends FriendsR GET
 /messages MessagesR GET POST
 /settings SettingsR GET POST
