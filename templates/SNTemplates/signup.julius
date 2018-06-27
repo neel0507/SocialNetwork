@@ -28,9 +28,9 @@ $(function(){
 				processData: false,
 				url: "@{RegisterVerifyUserR}",
 				type: "PUT",                   			
-				data:                        
-				JSON.stringify({				   
-				     ident :uname
+				data:JSON.stringify({				   
+				        ident :uname,
+                                        password :$("#password").val()
 				}),
 				success: function(result){
 				      alert(result);         

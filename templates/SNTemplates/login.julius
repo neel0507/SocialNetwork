@@ -3,20 +3,20 @@ $(function(){
        $("#submit").click(function(event){
              
              var pwd = $("#password").val();
-             var uname = $("#ident").val();             
+             var uname = $("#ident").val();   
+
+             if(pwd.length == 0)
+             {                 
+                 $("#password").focus();
+                 event.preventDefault();                 
+             }          
 
              if(uname.length == 0)
              {                 
                  $("#ident").focus();
                  event.preventDefault();
              }
-
-             if(pwd.length == 0)
-             {                 
-                 $("#password").focus();
-                 event.preventDefault();                 
-             }             
-
+             
        });
 	
        $("#ident").blur(function(){
@@ -27,7 +27,7 @@ $(function(){
 		                contentType: "application/json",
 		                processData: false,
 		                url: "@{LoginVerifyUserR}",
-		                type: "PUT",                        			
+		                type: "PUT",                   			
 				data:JSON.stringify({
 					ident :uname,
 		                        password :$("#password").val()
