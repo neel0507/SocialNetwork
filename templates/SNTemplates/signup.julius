@@ -1,42 +1,46 @@
-$(function(){
+$(function(){       
 
        $("#submit").click(function(event){
-             
+                       
              var pwd = $("#password").val();
              var uname = $("#ident").val();
 
              if(pwd.length == 0)
-             {                 
-                 $("#password").focus();
-                 event.preventDefault();                 
-             }
+             {             
+                 $("#password").focus();                     
+                 event.preventDefault();
+             }  
 
              if(uname.length == 0)
-             {                 
-                 $("#ident").focus();
+             {             
+                 $("#ident").focus();                     
                  event.preventDefault();
-             }
+             }          
 
        });
 	
        $("#ident").blur(function(){
-		$.ajax({
-                        contentType: "application/json",
-                        processData: false,
-                        url: "@{RegisterVerifyUserR}",
-                        type: "PUT",                        			
-			data:JSON.stringify({
-				ident :$("#ident").val(),
-                                password :$("#password").val()
-			}),
-			success: function(result){
-                           alert(result); 
-                        },
-                        error: function(xhr, status, error) {
-                           alert(xhr.responseText);
-                        },
-			datatype: "text"
-		});
+                var uname = $("#ident").val();
+                if(uname.length > 0)
+                {
+			$.ajax({
+				contentType: "application/json",
+				processData: false,
+				url: "@{RegisterVerifyUserR}",
+				type: "PUT",                   			
+				data:                        
+				JSON.stringify({				   
+				     ident :uname
+				}),
+				success: function(result){
+				      alert(result);         
+				},
+				error: function(xhr, status, error) {
+				   alert(xhr.responseText);
+				},
+				dataType: "text"
+			});
+                }
        });
        
 });

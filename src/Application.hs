@@ -166,11 +166,12 @@ appMain = do
     foundation <- makeFoundation settings
 
     -- Generate a WAI Application from the foundation
-    app <- makeApplication foundation
+    app <- makeApplication foundation    
 
     -- Run the application with Warp
     runSettings (warpSettings foundation) app
 
+    
 
 --------------------------------------------------------------
 -- Functions for DevelMain.hs (a way to run the app from GHCi)
