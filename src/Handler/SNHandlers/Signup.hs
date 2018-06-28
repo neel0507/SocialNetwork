@@ -18,26 +18,33 @@ postSignupR = do
     password <- runInputPost $ ireq textField "password"
     
     existingUser <- runDB $ getBy $ UniqueUser ident
-    _ <- case existingUser of
-         Nothing -> runDB $ insert $ User 
+    existingUserId <- case existingUser of
+         Nothing -> 
+          runDB $ insert $ User 
           { userIdent = ident
           , userPassword = password
-          }
+          }       
          Just (Entity userId _) -> return userId
+
+    existingMember <- runDB $ getBy $ UniqueMember existingUserId
+    _ <- case existingMember of
+         Nothing ->
+          runDB $ insert $ Member
+          { memberUserId = existingUserId
+          , memberLoggedInUser = False
+          }
+         Just (Entity mUserId _) -> return mUserId
+ 
     defaultLayout $ do
       [whamlet|
        <ul class="menu">
         <li><a href=@{HomepageR}>Home </a>
+        <li><a href=@{SignupR}>Signup </a>
         <li><a href=@{LoginpageR}>Log In </a>
-        <li><a href=@{MembersR}>Members </a>
-        <li><a href=@{FriendsR}>Friends </a>
-        <li><a href=@{MessagesR}>Messages </a>
-        <li><a href=@{SettingsR}>Settings </a>
-        <li><a href=@{LogoutpageR}>Log Out </a>
        <br>
-       <div class="message"><b>Welcome to Social Network, #{ident}</b>
+       <div class="message"><b>Account for user #{ident} created.</b>
        <br>   
-       <div class="message"><b>Please enter your details to login</b>
+       <div class="message"><b>Please enter your details to login.</b>
       |]
          
      

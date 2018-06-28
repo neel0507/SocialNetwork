@@ -6,6 +6,11 @@ User json
     password Text
     UniqueUser ident
     deriving Typeable
+Member
+    userId UserId
+    loggedInUser Bool
+    UniqueMember userId
+    deriving Show
 Email
     email Text
     userId UserId Maybe

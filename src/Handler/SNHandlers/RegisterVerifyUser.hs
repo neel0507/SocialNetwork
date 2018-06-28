@@ -11,7 +11,8 @@ import Import
 putRegisterVerifyUserR :: Handler String
 putRegisterVerifyUserR = do
      user <- requireJsonBody :: Handler User
-     existingUser <- runDB $ getBy $ UniqueUser (userIdent user)
-     return $ case existingUser of
-           Just _  -> "User exists, please select a different username"
-           Nothing -> "This username is available"
+     existingUser <- runDB $ count [UserIdent ==. (userIdent user)]
+     if (existingUser > 0)
+        then return "User exists, please select a different username"
+     else
+             return "This username is available"

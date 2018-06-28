@@ -30,7 +30,7 @@ $(function(){
 				type: "PUT",                   			
 				data:JSON.stringify({				   
 				        ident :uname,
-                                        password :$("#password").val()
+                                        password :""
 				}),
 				success: function(result){
 				      alert(result);         
