@@ -3,7 +3,6 @@
 module Handler.SNHandlers.Settings where
 
 import Import
-import Database.Persist.Sql
 
 getSettingsR :: Handler Html
 getSettingsR = do

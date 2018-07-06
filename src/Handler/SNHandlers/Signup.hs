@@ -4,8 +4,6 @@ module Handler.SNHandlers.Signup where
 
 import Import
 import Yesod.Form (runInputPost, textField, ireq)
-import Database.Persist.Sql
---import Yesod.Core
 
 getSignupR :: Handler Html
 getSignupR = do    

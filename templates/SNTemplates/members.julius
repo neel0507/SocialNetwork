@@ -1,8 +1,0 @@
-$(function(){
-
-       $(".membersListItem").click(function(event){ 
-             var idValue = $(this).attr("id"); 
-             $("#" + idValue).hide();
-       });
-
-});
