@@ -3,6 +3,7 @@
 module Handler.SNHandlers.Messages where
 
 import Import
+import Database.Persist.Sql
 
 getMessagesR :: Handler Html
 getMessagesR = do

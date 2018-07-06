@@ -1,16 +1,8 @@
 $(function(){
 
-       $("a[name]").hide();
-       $(".membersListItem").click(function(event){
-             event.preventDefault();  
+       $(".membersListItem").click(function(event){ 
              var idValue = $(this).attr("id"); 
-             $("#" + idValue).hide().siblings().show();
-       });
-
-       $(".membersListItem").click(function(event){
-             event.preventDefault();  
-             var nameValue = $(this).attr("name"); 
-             $("a[name='" + nameValue + "']").hide().siblings().show();
+             $("#" + idValue).hide();
        });
 
 });

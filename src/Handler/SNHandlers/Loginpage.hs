@@ -17,17 +17,15 @@ postLoginpageR = do
     password <- runInputPost $ ireq textField "password"
     
     existingUser <- runDB $ getBy $ UniqueUser user    
-    let existingUserId = case existingUser of
-         Just (Entity userId _) -> fromSqlKey $ userId
-         Nothing -> 0 :: Int64      
+    case existingUser of
+         Just (Entity userId _) -> setSession "_ID" (pack $ show $ fromSqlKey userId)
+         Nothing -> setSession "_ID" "0"          
     let isValid = case existingUser of
          Nothing -> False
          Just (Entity _ sqlUser) -> (unpack password) == (unpack (userPassword sqlUser))
         
     if isValid
-        then     do
-             runDB $ updateWhere [MemberUserId !=. (mUserId existingUserId)] [MemberLoggedInUser =. False]
-             runDB $ updateWhere [MemberUserId ==. (mUserId existingUserId)] [MemberLoggedInUser =. True]              
+        then 
              defaultLayout $ do
                   [whamlet|
                    <ul class="menu">
@@ -44,5 +42,3 @@ postLoginpageR = do
              defaultLayout $ do
                   [whamlet| <p>Invalid User |]
 
-mUserId :: Int64 -> Key User
-mUserId userId = toSqlKey $ userId

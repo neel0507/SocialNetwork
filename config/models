@@ -5,12 +5,16 @@ User json
     ident Text
     password Text
     UniqueUser ident
-    deriving Typeable
+    deriving Eq Ord Show Typeable
 Member
-    userId UserId
-    loggedInUser Bool
+    userId UserId 
+    ident Text
     UniqueMember userId
-    deriving Show
+    deriving Eq Ord Show
+FollowingMembers
+    memberId MemberId 
+    followingMemberId MemberId 
+    deriving Eq Ord Show
 Email
     email Text
     userId UserId Maybe

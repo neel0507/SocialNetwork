@@ -4,6 +4,7 @@ module Handler.SNHandlers.Signup where
 
 import Import
 import Yesod.Form (runInputPost, textField, ireq)
+import Database.Persist.Sql
 --import Yesod.Core
 
 getSignupR :: Handler Html
@@ -18,22 +19,23 @@ postSignupR = do
     password <- runInputPost $ ireq textField "password"
     
     existingUser <- runDB $ getBy $ UniqueUser ident
+
     existingUserId <- case existingUser of
          Nothing -> 
           runDB $ insert $ User 
-          { userIdent = ident
-          , userPassword = password
-          }       
-         Just (Entity userId _) -> return userId
+           { userIdent = ident
+           , userPassword = password
+           }       
+         Just (Entity userId _) -> return userId  
 
     existingMember <- runDB $ getBy $ UniqueMember existingUserId
     _ <- case existingMember of
          Nothing ->
           runDB $ insert $ Member
-          { memberUserId = existingUserId
-          , memberLoggedInUser = False
-          }
-         Just (Entity mUserId _) -> return mUserId
+           { memberUserId = existingUserId 
+           , memberIdent = ident
+           }
+         Just (Entity userId _) -> return userId
  
     defaultLayout $ do
       [whamlet|
@@ -46,6 +48,4 @@ postSignupR = do
        <br>   
        <div class="message"><b>Please enter your details to login.</b>
       |]
-         
-     
 
