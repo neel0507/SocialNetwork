@@ -31,6 +31,22 @@ getMembersR = do
     let addMemberKey = memberId addMemberId
     let removeMemberKey = memberId removeMemberId
 
+    viewMemberEntity <- case uname of
+           Just uname -> runDB $ getBy $ UniqueMember (userId ((read $ unpack uname)::Int64))
+           Nothing -> return Nothing
+    
+    viewMemberName <- case viewMemberEntity of
+           Just (Entity memberId member) -> return $ memberIdent member
+           Nothing -> return $ pack "Does not exist"
+
+    viewProfileMessageEntity <- case uname of
+           Just uname -> runDB $ getBy $ UniqueProfileMessage (memberId ((read $ unpack uname)::Int64))
+           Nothing -> return Nothing
+
+    viewMemberMessage <- case viewProfileMessageEntity of
+           Just (Entity _ pm) -> return $ unTextarea (profileMessageMessage pm)
+           Nothing -> return $ pack "No message yet"
+
     if sessUserId > 0
          then do
              memberFollowed <- addMemberToDB addMemberId memberKey addMemberKey
@@ -89,18 +105,21 @@ getMembersR = do
                                      <ul class="memberlist"> 
                                          $if (followingMembersCount > mCount)
                                            $forall (E.Value userId, E.Value userIdent) <- followingMembers
-                                                     <li><a href="@{MembersR}?view=#{userIdent}">#{userIdent}</a> <a href="@{MembersR}?remove=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}">drop</a> <a href="@{MembersR}?add=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}" style="display:none">follow</a>
+                                                     <li><a href="@{MembersR}?view=#{fromSqlKey $ userId}">#{userIdent}</a> <a href="@{MembersR}?remove=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}">drop</a> <a href="@{MembersR}?add=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}" style="display:none">follow</a>
                                            $forall (E.Value userId, E.Value userIdent) <- unFollowingMembers         
-                                                           <li><a href="@{MembersR}?view=#{userIdent}">#{userIdent}</a> <a href="@{MembersR}?add=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}">follow</a> <a href="@{MembersR}?remove=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}" style="display:none">drop</a>
+                                                           <li><a href="@{MembersR}?view=#{fromSqlKey $ userId}">#{userIdent}</a> <a href="@{MembersR}?add=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}">follow</a> <a href="@{MembersR}?remove=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}" style="display:none">drop</a>
                                          $else
                                            $forall (E.Value userId, E.Value userIdent) <- otherMembers
 
-                                                           <li><a href="@{MembersR}?view=#{userIdent}">#{userIdent}</a> <a href="@{MembersR}?add=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}">follow</a><a href="@{MembersR}?remove=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}" style="display:none">drop</a>
+                                                           <li><a href="@{MembersR}?view=#{fromSqlKey $ userId}">#{userIdent}</a> <a href="@{MembersR}?add=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}">follow</a><a href="@{MembersR}?remove=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}" style="display:none">drop</a>
                                    |]
                                   
                          Just uname ->                
                                    [hamlet|
-                                      <div class="message"><p>#{uname}&#39;s Profile</p>
+                                      <div class="message"><p>#{viewMemberName}&#39;s Profile</p>
+                                      <div class="message"><p>Profile Message: #{viewMemberMessage}</p>
+                                      <ul class="menu">
+                                             <li><a href="@{MessagesR}?view=#{uname}">View #{viewMemberName}&#39;s Messages </a>
                                    |] 
     else
          redirect LoginpageR

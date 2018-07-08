@@ -15,6 +15,11 @@ FollowingMembers
     memberId MemberId 
     followingMemberId MemberId 
     deriving Eq Ord Show
+ProfileMessage json
+    memberId MemberId
+    message Textarea
+    UniqueProfileMessage memberId
+    deriving Eq Ord Show Typeable
 Email
     email Text
     userId UserId Maybe
