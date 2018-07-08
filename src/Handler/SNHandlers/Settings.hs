@@ -22,6 +22,7 @@ getSettingsR = do
                Nothing -> return $ pack "No message yet"
 
            defaultLayout $ do
+              addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
               $(widgetFile "SNTemplates/settings")
               toWidget
                [hamlet|
@@ -54,6 +55,7 @@ postSettingsR = do
            insertedMessage <- insertMessage updatedMessage memberKey message
 
            defaultLayout $ do
+             addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
              $(widgetFile "SNTemplates/settings")      
              toWidget
                 [hamlet|
