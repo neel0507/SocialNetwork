@@ -1,5 +1,6 @@
 $(function(){       
 
+       
        $("#submit").click(function(event){
                        
              var pwd = $("#password").val();
@@ -33,8 +34,9 @@ $(function(){
                                         password :""
 				}),
 				success: function(result){
-				      alert(result);         
+				      alert(result);        
 				},
+                                
 				error: function(xhr, status, error) {
 				   alert(xhr.responseText);
 				},

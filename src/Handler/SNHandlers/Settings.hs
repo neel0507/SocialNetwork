@@ -24,14 +24,7 @@ getSettingsR = do
            defaultLayout $ do
               addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
               $(widgetFile "SNTemplates/settings")
-              toWidget
-               [hamlet|
-                  <div class="message">Your profile message: #{message}
-                  <div class="message"><h2>Enter profile message:</h2>
-                  <form method="POST" action="/settings">   
-                    <div class="message"><textarea id="txtarea" name="txtarea" rows="4" cols="40" style="resize: none;"></textarea>
-                    <div class="message"><input id="submit" type="submit" name="submit" value="Save Profile">
-               |]
+              
        else
            redirect LoginpageR
 
@@ -57,14 +50,7 @@ postSettingsR = do
            defaultLayout $ do
              addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
              $(widgetFile "SNTemplates/settings")      
-             toWidget
-                [hamlet|
-                  <div class="message">Your profile message: #{message}
-                  <div class="message"><h2>Enter profile message:</h2>
-                  <form method="POST" action="/settings">   
-                    <div class="message"><textarea id="txtarea" name="txtarea" rows="4" cols="40" style="resize: none;"></textarea>
-                    <div class="message"><input id="submit" type="submit" name="submit" value="Save Profile">
-                |]
+             
        else
            redirect LoginpageR
    

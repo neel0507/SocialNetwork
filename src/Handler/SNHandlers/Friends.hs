@@ -37,7 +37,7 @@ getFriendsR = do
                            $forall (E.Value followedMember) <- followingMembers
                                    <li> #{followedMember}
                      <ul class="menu">
-                                   <li><a href="@{MessagesR}?view=">View Your Messages </a>
+                                   <li><a href="@{MessagesR}">View Your Messages </a>
                    |]
     else
          redirect LoginpageR

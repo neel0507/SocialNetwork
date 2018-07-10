@@ -15,10 +15,18 @@ FollowingMembers
     memberId MemberId 
     followingMemberId MemberId 
     deriving Eq Ord Show
-ProfileMessage json
+ProfileMessage
     memberId MemberId
     message Textarea
     UniqueProfileMessage memberId
+    deriving Eq Ord Show Typeable
+MemberMessage
+    memberId MemberId
+    fromMemberId MemberId
+    fromMember Text
+    isPrivateMessage Bool
+    time UTCTime
+    message Textarea
     deriving Eq Ord Show Typeable
 Email
     email Text

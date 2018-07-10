@@ -1,11 +1,15 @@
-function validate()
-{
-    if(document.getElementById("txtarea").value.length == 0)
-    {
-       document.getElementById("txtarea").focus();
-    }
-    else
-    {
-       document.getElementById("test").style.display = "none";
-    }
-}
+$(function() {
+
+  $("#submit").click(function(event) {
+    
+     var message = $("#txtarea").val();   
+
+     if(message.length == 0)
+     {                 
+         $("#txtarea").focus();
+         event.preventDefault();                 
+     }
+
+  });
+
+});

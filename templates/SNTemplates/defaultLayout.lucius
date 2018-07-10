@@ -27,14 +27,17 @@ div.title {
        }
 
 .info {
+  margin-top: 10px;
   background :lightgreen;
   color      :blue;
   border     :1px solid green;
   padding    :5px 10px;
-  margin-left:40px;  
+  margin-left:40px;
+  width: 150px;
+  margin-bottom: 10px;  
 }
 
-div.message { margin-left: 40px; }
+.message { margin-left: 40px; }
 
 a:link  { text-decoration   :none;}
 a:hover { color             :#d04;}
@@ -56,4 +59,8 @@ a:hover { color             :#d04;}
 }
 
 .memberlist { margin-left: 60px; }
+
+.listItem { margin-left: 20px; }
+
+.ulStyle {list-style-type: none;}
 
