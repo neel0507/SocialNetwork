@@ -36,7 +36,6 @@ $(function(){
 				success: function(result){
 				      alert(result);        
 				},
-                                
 				error: function(xhr, status, error) {
 				   alert(xhr.responseText);
 				},

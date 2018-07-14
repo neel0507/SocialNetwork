@@ -8,7 +8,7 @@ $(function() {
      {                 
          $("#txtarea").focus();
          event.preventDefault();                 
-     }
+     }     
 
   });
 

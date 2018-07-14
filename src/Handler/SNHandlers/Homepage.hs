@@ -6,5 +6,13 @@ import Import
 
 getHomepageR :: Handler Html
 getHomepageR = do
-    defaultLayout $ do
-       $(widgetFile "SNTemplates/homepage")
+    uid <- lookupSession "_ID"
+    sessUserId <- getMemberId uid
+
+    if sessUserId > 0
+        then
+            defaultLayout $ do
+              $(widgetFile "SNTemplates/loggedInMember")
+        else
+            defaultLayout $ do
+              $(widgetFile "SNTemplates/homepage")

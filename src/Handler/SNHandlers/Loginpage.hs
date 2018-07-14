@@ -3,7 +3,6 @@
 module Handler.SNHandlers.Loginpage where
 
 import Import
-import Database.Persist.Sql
 
 getLoginpageR :: Handler Html
 getLoginpageR = do
@@ -13,32 +12,18 @@ getLoginpageR = do
 
 postLoginpageR :: Handler Html
 postLoginpageR = do
-    user <- runInputPost $ ireq textField "ident"
-    password <- runInputPost $ ireq textField "password"
+    user <- getPostParameters "ident"
+    password <- getPostParameters "password"
     
-    existingUser <- runDB $ getBy $ UniqueUser user    
-    case existingUser of
-         Just (Entity userId _) -> setSession "_ID" (pack $ show $ fromSqlKey userId)
-         Nothing -> setSession "_ID" "0"          
-    let isValid = case existingUser of
-         Nothing -> False
-         Just (Entity _ sqlUser) -> (unpack password) == (unpack (userPassword sqlUser))
+    existingUser <- getUniqueUser user    
+    setUserSessionId existingUser
+         
+    isValid <- isSiteUser existingUser password
         
     if isValid
         then 
              defaultLayout $ do
-                  [whamlet|
-                   <ul class="menu">
-                    <li><a href=@{HomepageR}>Home </a>
-                    <li><a href=@{MembersR}>Members </a>
-                    <li><a href=@{FriendsR}>Friends </a>
-                    <li><a href=@{MessagesR}>Messages </a>
-                    <li><a href=@{SettingsR}>Settings </a>
-                    <li><a href=@{LogoutpageR}>Log Out </a>
-                   <br>
-                   <div class="message"><b>Welcome to Social Network, #{user}</b>
-                  |]
+               $(widgetFile "SNTemplates/validUser")   
         else     
              defaultLayout $ do
-                  [whamlet| <p>Invalid User |]
-
+               [whamlet| <p>Invalid User |]         

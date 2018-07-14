@@ -6,3 +6,14 @@
         <li><a href=@{SettingsR}>Settings </a>
         <li><a href=@{LogoutpageR}>Log Out </a>
    <br>
+   <div class="message"><h2>Other Members</h2>
+                                     <ul class="memberlist"> 
+                                         $if (followingMembersCount > noMembers)
+                                           $forall (E.Value userId, E.Value userIdent) <- followingMembers
+                                                     <li><a href="@{MembersR}?view=#{fromSqlKey $ userId}">#{userIdent}</a> <a href="@{MembersR}?remove=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}">drop</a> <a href="@{MembersR}?add=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}" style="display:none">follow</a>
+                                           $forall (E.Value userId, E.Value userIdent) <- unFollowingMembers         
+                                                           <li><a href="@{MembersR}?view=#{fromSqlKey $ userId}">#{userIdent}</a> <a href="@{MembersR}?add=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}">follow</a> <a href="@{MembersR}?remove=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}" style="display:none">drop</a>
+                                         $else
+                                           $forall (E.Value userId, E.Value userIdent) <- members
+
+                                                           <li><a href="@{MembersR}?view=#{fromSqlKey $ userId}">#{userIdent}</a> <a href="@{MembersR}?add=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}">follow</a><a href="@{MembersR}?remove=#{fromSqlKey $ userId}" class="membersListItem" id="member#{fromSqlKey $ userId}" style="display:none">drop</a>

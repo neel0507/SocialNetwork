@@ -12,35 +12,17 @@ import           Database.Esqueleto      ((^.))
 getFriendsR :: Handler Html
 getFriendsR = do
     uid <- lookupSession "_ID"
-
-    let sessUserId = case uid of
-          Just uid -> read (unpack uid) :: Int64
-          Nothing  -> 0 :: Int64
-    let memberKey = memberId sessUserId
+    sessUserId <- getMemberId uid    
 
     if sessUserId > 0
          then do
-             followingMembers <- runDB
-              $ E.select
-              $ E.from $ \(followingMembers `E.InnerJoin` member) -> do                  
-                  E.on $ followingMembers ^. FollowingMembersFollowingMemberId E.==. member ^. MemberId
-                  E.where_ $ followingMembers ^. FollowingMembersMemberId E.==. E.val memberKey             
-                  return
-                      (member ^. MemberIdent)
+             let memberKey = getMemberKey sessUserId
+             let userKey = getUserKey sessUserId
+             followingMembersCount <- getFollowingMembersCount memberKey                    
+             followingMembers <- getFollowingMembers followingMembersCount noMembers memberKey
 
              defaultLayout $ do
-                 $(widgetFile "SNTemplates/friends")
-                 toWidget
-                   [hamlet|
-                     <div class="message"><h2>You are Following</h2>
-                     <ul class="memberlist">
-                           $forall (E.Value followedMember) <- followingMembers
-                                   <li> #{followedMember}
-                     <ul class="menu">
-                                   <li><a href="@{MessagesR}">View Your Messages </a>
-                   |]
+                 $(widgetFile "SNTemplates/friends")                
     else
          redirect LoginpageR
 
-memberId :: Int64 -> Key Member
-memberId userId = toSqlKey $ userId

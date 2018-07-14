@@ -1,0 +1,8 @@
+  <ul class="menu">
+    <li><a href=@{HomepageR}>Home </a>
+    <li><a href=@{SignupR}>Signup </a>
+    <li><a href=@{LoginpageR}>Log In </a>
+  <br>
+  <div class="message"><b>Account for user #{ident} created.</b>
+  <br>   
+  <div class="message"><b>Please enter your details to login.</b>

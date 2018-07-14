@@ -3,7 +3,6 @@
 module Handler.SNHandlers.Signup where
 
 import Import
-import Yesod.Form (runInputPost, textField, ireq)
 
 getSignupR :: Handler Html
 getSignupR = do    
@@ -13,37 +12,14 @@ getSignupR = do
 
 postSignupR :: Handler Html
 postSignupR = do
-    ident <- runInputPost $ ireq textField "ident"
-    password <- runInputPost $ ireq textField "password"
+    ident <- getPostParameters "ident"
+    password <- getPostParameters "password"
     
-    existingUser <- runDB $ getBy $ UniqueUser ident
+    existingUser <- getUniqueUser ident
+    existingUserId <- createUserRecordAndReturnUserKey existingUser ident password  
 
-    existingUserId <- case existingUser of
-         Nothing -> 
-          runDB $ insert $ User 
-           { userIdent = ident
-           , userPassword = password
-           }       
-         Just (Entity userId _) -> return userId  
-
-    existingMember <- runDB $ getBy $ UniqueMember existingUserId
-    _ <- case existingMember of
-         Nothing ->
-          runDB $ insert $ Member
-           { memberUserId = existingUserId 
-           , memberIdent = ident
-           }
-         Just (Entity userId _) -> return userId
+    existingMember <- getUniqueMember existingUserId
+    _ <- createMemberRecordAndReturnMemberKey existingMember existingUserId ident
  
     defaultLayout $ do
-      [whamlet|
-       <ul class="menu">
-        <li><a href=@{HomepageR}>Home </a>
-        <li><a href=@{SignupR}>Signup </a>
-        <li><a href=@{LoginpageR}>Log In </a>
-       <br>
-       <div class="message"><b>Account for user #{ident} created.</b>
-       <br>   
-       <div class="message"><b>Please enter your details to login.</b>
-      |]
-
+      $(widgetFile "SNTemplates/postSignup")
