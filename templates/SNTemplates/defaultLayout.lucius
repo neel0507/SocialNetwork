@@ -39,6 +39,9 @@ div.title {
 
 .message { margin-left: 40px; }
 
+.validUser { color: green; display:none;}
+.inValidUser { color: red; display:none;}
+
 a:link  { text-decoration   :none;}
 a:hover { color             :#d04;}
 

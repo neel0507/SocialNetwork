@@ -19,31 +19,43 @@ $(function(){
              }          
 
        });
-	
-       $("#ident").blur(function(){
-                var uname = $("#ident").val();
+       
+       $("#ident").blur(function(){                
+		var uname = $("#ident").val();
+                
                 if(uname.length > 0)
                 {
 			$.ajax({
-				contentType: "application/json",
-				processData: false,
 				url: "@{RegisterVerifyUserR}",
-				type: "PUT",                   			
-				data:JSON.stringify({				   
-				        ident :uname,
-                                        password :""
-				}),
+				type: "PUT",
+				contentType: "application/json",                   			
+				data: JSON.stringify({ident:uname, password:""}), 
 				success: function(result){
-				      alert(result);        
+				      var data = result;
+                                      if(data == "User exists")
+                                      {
+                                        $("#vu").hide();
+ 					$("#ivu").show();                                        
+                                      }
+                                      else
+                                      {
+                                        $("#ivu").hide();
+					$("#vu").show();
+                                      }        
 				},
 				error: function(xhr, status, error) {
 				   alert(xhr.responseText);
 				},
-				dataType: "text"
+				dataType : "text"
 			});
                 }
-       });
-       
+                else
+                {
+		    $("#ivu").hide();
+		    $("#vu").hide();	
+                }
+
+       });    
 });
 
 

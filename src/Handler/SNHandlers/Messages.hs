@@ -34,7 +34,8 @@ getMessagesR = do
                         messages <- getMemberMessages loggedInMemberKey 
                         defaultLayout $ do              
                           addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
-                          $(widgetFile "SNTemplates/memberMessages")          
+                          $(widgetFile "SNTemplates/memberMessages")
+                          toWidget $(juliusFile "templates/SNTemplates/messages.julius")          
                     else
                         defaultLayout $ do              
                           addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
@@ -94,7 +95,8 @@ postMessagesR = do
 
                   defaultLayout $ do              
                     addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
-                    $(widgetFile "SNTemplates/memberMessages")                                             
+                    $(widgetFile "SNTemplates/memberMessages")
+                    toWidget $(juliusFile "templates/SNTemplates/messages.julius")                                             
 
                Just un -> do                                    
                   viewMemberId <- getMemberId uname                  

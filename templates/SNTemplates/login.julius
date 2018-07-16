@@ -33,13 +33,28 @@ $(function(){
 		                        password :""
 				}),
 				success: function(result){                           
-		                      alert(result);                           
+		                      var data = result;
+                                      if(data == "Invalid Username")
+                                      {
+                                        $("#vu").hide();
+ 					$("#ivu").show();                                        
+                                      }
+                                      else
+                                      {
+                                        $("#ivu").hide();
+					$("#vu").show();
+                                      }                           
 		                },
 		                error: function(xhr, status, error) {
 		                   alert(xhr.responseText);
 		                },
 				datatype: "text"
 			});
+                }
+                else
+                {
+		    $("#ivu").hide();
+		    $("#vu").hide();	
                 }
        });
        
