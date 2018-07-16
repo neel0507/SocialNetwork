@@ -10,9 +10,17 @@ getHomepageR = do
     sessUserId <- getMemberId uid
 
     if sessUserId > 0
-        then
+        then do            
+            memberEntity <- getUniqueMember $ getUserKey sessUserId
+            user <- getMemberName memberEntity "Does not exist"
             defaultLayout $ do
-              $(widgetFile "SNTemplates/loggedInMember")
+              $(widgetFile "SNTemplates/validUser")              
         else
             defaultLayout $ do
-              $(widgetFile "SNTemplates/homepage")
+              $(widgetFile "SNTemplates/homepage")              
+
+getLogoutpageR :: Handler Html
+getLogoutpageR = do
+    setSession "_ID" "0"
+    defaultLayout $ do       
+       $(widgetFile "SNTemplates/homepage")

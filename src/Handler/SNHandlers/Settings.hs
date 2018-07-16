@@ -4,7 +4,7 @@ module Handler.SNHandlers.Settings where
 
 import Import
 import Database.Persist.Sql
-
+import           Text.Julius             (juliusFile)
 
 getSettingsR :: Handler Html
 getSettingsR = do
@@ -21,6 +21,7 @@ getSettingsR = do
            defaultLayout $ do
               addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
               $(widgetFile "SNTemplates/settings")
+              toWidget $(juliusFile "templates/SNTemplates/messages.julius")
               
        else
            redirect LoginpageR

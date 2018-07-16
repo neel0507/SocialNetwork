@@ -1,6 +1,7 @@
 {-# LANGUAGE QuasiQuotes, TemplateHaskell, OverloadedStrings, TypeFamilies, MultiParamTypeClasses #-}
 
 module Handler.SNHandlers.Signup where
+import Text.Julius          (juliusFile)
 
 import Import
 
@@ -9,6 +10,7 @@ getSignupR = do
     defaultLayout $ do
        addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
        $(widgetFile "SNTemplates/signup")
+       toWidget $(juliusFile "templates/SNTemplates/reglogin.julius")
 
 postSignupR :: Handler Html
 postSignupR = do
@@ -23,3 +25,13 @@ postSignupR = do
  
     defaultLayout $ do
       $(widgetFile "SNTemplates/postSignup")
+
+putRegisterVerifyUserR :: Handler String
+putRegisterVerifyUserR = do
+     user <- requireJsonBody :: Handler User
+     existingUser <- runDB $ count [UserIdent ==. (userIdent user)]    
+     if (existingUser > 0)
+        then
+            return "User exists"              
+        else
+            return "Username available"

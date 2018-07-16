@@ -1,6 +1,18 @@
-$(function(){       
+$(function(){  
+     
+       var pageURL = $(location).attr("href").split("/");
 
-       
+       if (pageURL[3] == "signup")
+       {
+       	 var url = "@{RegisterVerifyUserR}";
+         var stringToCheck = "User exists";
+       }
+       else if (pageURL[3] == "login")
+       {
+	 var url = "@{LoginVerifyUserR}";
+         var stringToCheck = "Invalid Username";
+       }
+
        $("#submit").click(function(event){
                        
              var pwd = $("#password").val();
@@ -26,13 +38,13 @@ $(function(){
                 if(uname.length > 0)
                 {
 			$.ajax({
-				url: "@{RegisterVerifyUserR}",
+				url: url,
 				type: "PUT",
 				contentType: "application/json",                   			
 				data: JSON.stringify({ident:uname, password:""}), 
 				success: function(result){
 				      var data = result;
-                                      if(data == "User exists")
+                                      if(data == stringToCheck)
                                       {
                                         $("#vu").hide();
  					$("#ivu").show();                                        

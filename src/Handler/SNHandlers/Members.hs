@@ -3,8 +3,9 @@
 module Handler.SNHandlers.Members where
 
 import Import
-import qualified Database.Esqueleto      as E
 import Database.Persist.Sql
+import qualified Database.Esqueleto      as E
+import           Database.Esqueleto      ((^.))
 
 getMembersR :: Handler Html
 getMembersR = do  
@@ -45,6 +46,23 @@ getMembersR = do
                         $(widgetFile "SNTemplates/members")                                                        
                                       
              return page                      
+    else
+         redirect LoginpageR
+
+getFriendsR :: Handler Html
+getFriendsR = do
+    uid <- lookupSession "_ID"
+    sessUserId <- getMemberId uid    
+
+    if sessUserId > 0
+         then do
+             let memberKey = getMemberKey sessUserId
+             let userKey = getUserKey sessUserId
+             followingMembersCount <- getFollowingMembersCount memberKey                    
+             followingMembers <- getFollowingMembers followingMembersCount noMembers memberKey
+
+             defaultLayout $ do
+                 $(widgetFile "SNTemplates/friends")
     else
          redirect LoginpageR
 
