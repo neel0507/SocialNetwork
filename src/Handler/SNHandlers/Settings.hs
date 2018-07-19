@@ -8,7 +8,7 @@ import           Text.Julius             (juliusFile)
 
 getSettingsR :: Handler Html
 getSettingsR = do
-    uid <- lookupSession "_ID"
+    uid <- lookupSession "User_Id"
     sessUserId <- getMemberId uid
 
     if sessUserId > 0
@@ -28,7 +28,7 @@ getSettingsR = do
 
 postSettingsR :: Handler Html
 postSettingsR = do
-    uid <- lookupSession "_ID"    
+    uid <- lookupSession "User_Id"    
     sessUserId <- getMemberId uid
 
     if sessUserId > 0

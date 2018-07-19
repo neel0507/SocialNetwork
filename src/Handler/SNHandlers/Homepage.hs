@@ -6,7 +6,7 @@ import Import
 
 getHomepageR :: Handler Html
 getHomepageR = do
-    uid <- lookupSession "_ID"
+    uid <- lookupSession "User_Id"
     sessUserId <- getMemberId uid
 
     if sessUserId > 0
@@ -21,6 +21,6 @@ getHomepageR = do
 
 getLogoutpageR :: Handler Html
 getLogoutpageR = do
-    setSession "_ID" "0"
+    deleteSession "User_Id"
     defaultLayout $ do       
        $(widgetFile "SNTemplates/homepage")

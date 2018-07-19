@@ -106,7 +106,7 @@ instance Yesod App where
 
     defaultLayout :: Widget -> Handler Html
     defaultLayout widget = do
-        uid <- lookupSession "_ID"
+        uid <- lookupSession "User_Id"
         
         member <- case uid of
            Just uid -> runDB $ getBy $ UniqueMember (toSqlKey ((read $ unpack uid)::Int64))
@@ -338,8 +338,8 @@ createMemberRecordAndReturnMemberKey entityMember userId uname = do
 setUserSessionId :: Maybe (Entity User) -> Handler ()
 setUserSessionId userEntity = do
           result <- case userEntity of
-                Just(Entity userId _) -> setSession "_ID" (pack $ show $ fromSqlKey userId)
-                Nothing -> setSession "_ID" "0"
+                Just(Entity userId _) -> setSession "User_Id" (pack $ show $ fromSqlKey userId)
+                Nothing -> setSession "User_Id" "0"
           return result
 
 

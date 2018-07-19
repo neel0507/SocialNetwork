@@ -17,13 +17,13 @@ postLoginpageR = do
     user <- getPostParameters "ident"
     password <- getPostParameters "password"
     
-    existingUser <- getUniqueUser user    
-    _ <- setUserSessionId existingUser
+    existingUser <- getUniqueUser user
          
     isValid <- isSiteUser existingUser password
         
     if isValid
-        then 
+        then  do
+             _ <- setUserSessionId existingUser
              defaultLayout $ do
                $(widgetFile "SNTemplates/validUser")   
         else     

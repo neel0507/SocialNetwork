@@ -11,7 +11,7 @@ import           Text.Julius             (juliusFile)
 
 getMessagesR :: Handler Html
 getMessagesR = do
-    uid <- lookupSession "_ID"
+    uid <- lookupSession "User_Id"
     sessUserId <- getMemberId uid
 
     if sessUserId > 0
@@ -71,7 +71,7 @@ getMessagesR = do
 
 postMessagesR :: Handler Html
 postMessagesR = do
-    uid <- lookupSession "_ID"
+    uid <- lookupSession "User_Id"
     sessUserId <- getMemberId uid
 
     if sessUserId > 0

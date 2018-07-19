@@ -5,11 +5,10 @@ module Handler.SNHandlers.Members where
 import Import
 import Database.Persist.Sql
 import qualified Database.Esqueleto      as E
-import           Database.Esqueleto      ((^.))
 
 getMembersR :: Handler Html
 getMembersR = do  
-    uid <- lookupSession "_ID"     
+    uid <- lookupSession "User_Id"     
     sessUserId <- getMemberId uid
 
     if sessUserId > 0
@@ -23,6 +22,7 @@ getMembersR = do
                     viewMemberName <- getMemberName viewMemberEntity "Does not exist"
                     viewProfileMessageEntity <- getUniqueProfileMessage $ getMemberKey viewMemberId
                     viewMemberMessage <- getProfileMessage viewProfileMessageEntity "No Message Yet"
+
                     defaultLayout $ do                
                       $(widgetFile "SNTemplates/viewMember")
                       
@@ -51,13 +51,12 @@ getMembersR = do
 
 getFriendsR :: Handler Html
 getFriendsR = do
-    uid <- lookupSession "_ID"
+    uid <- lookupSession "User_Id"
     sessUserId <- getMemberId uid    
 
     if sessUserId > 0
          then do
              let memberKey = getMemberKey sessUserId
-             let userKey = getUserKey sessUserId
              followingMembersCount <- getFollowingMembersCount memberKey                    
              followingMembers <- getFollowingMembers followingMembersCount noMembers memberKey
 
