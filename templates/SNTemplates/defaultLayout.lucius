@@ -45,9 +45,13 @@ div.title {
 a:link  { text-decoration   :none;}
 a:hover { color             :#d04;}
 
+.usernameField {margin-left: 10px; margin-top: 5px;}
+
+.passwordField {margin-left: 15px; margin-top: 5px;}
+
 .userInput { margin-left: 40px; margin-top: 10px;}
 
-.submit {margin-left: 132px; margin-top: 5px;}
+.submit {margin-left: 135px; margin-top: 5px;}
 
 .menu li, .button {
   display           :inline;

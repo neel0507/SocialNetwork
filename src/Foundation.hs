@@ -287,6 +287,26 @@ unsafeHandler :: App -> Handler a -> IO a
 unsafeHandler = Unsafe.fakeHandlerGetLogger appLogger
 
 
+userForm :: Html -> MForm Handler (FormResult User, Widget)
+userForm = renderDivs $ User
+    <$> areq textField userNameSettings Nothing
+    <*> areq textField passwordSettings Nothing
+    where userNameSettings = FieldSettings
+           { fsLabel = "Username",
+             fsTooltip = Nothing,
+             fsId = Just "ident",
+             fsName = Just "ident",
+             fsAttrs = [("class","usernameField")]
+           }
+          passwordSettings = FieldSettings
+           { fsLabel = "Password",
+             fsTooltip = Nothing,
+             fsId = Just "Password",
+             fsName = Just "Password",
+             fsAttrs = [("class","passwordField")]
+           }
+
+
 getPostParameters :: Text -> Handler Text 
 getPostParameters param= do
        result <- runInputPost $ ireq textField param

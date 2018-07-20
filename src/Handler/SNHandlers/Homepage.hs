@@ -12,7 +12,7 @@ getHomepageR = do
     if sessUserId > 0
         then do            
             memberEntity <- getUniqueMember $ getUserKey sessUserId
-            user <- getMemberName memberEntity "Does not exist"
+            username <- getMemberName memberEntity "Does not exist"
             defaultLayout $ do
               $(widgetFile "SNTemplates/validUser")              
         else

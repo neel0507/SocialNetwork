@@ -6,7 +6,7 @@
    <span class="info">&#8658; You must be logged in to view this page.
    <br>   
    <div class="message"><b>Please enter your details to log in</b> 
-   <form method="POST" action="/login">  
-    <div class="userInput">Username <input type="text" id="ident" name="ident"><span id="vu" class="validUser">Valid Username</span><span id="ivu" class="inValidUser">Invalid Username</span>   
-    <div class="userInput">Password &nbsp;<input type="text" id="password" name="password">
-    <div class="submit"><input id="submit" type="submit" name="submit" value="submit">
+   <div class="message">Your have entered: <span id="vu" class="validUser">a valid username</span><span id="ivu" class="inValidUser">an invalid username</span>
+   <form method=post action=@{LoginpageR} enctype=#{enctype}>
+     <div class="userInput">^{widget}                
+     <button name="submit" class="submit">Submit

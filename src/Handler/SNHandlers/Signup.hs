@@ -6,7 +6,8 @@ import Text.Julius          (juliusFile)
 import Import
 
 getSignupR :: Handler Html
-getSignupR = do    
+getSignupR = do
+    (widget, enctype) <- generateFormPost userForm    
     defaultLayout $ do
        addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
        $(widgetFile "SNTemplates/signup")
@@ -14,17 +15,24 @@ getSignupR = do
 
 postSignupR :: Handler Html
 postSignupR = do
-    ident <- getPostParameters "ident"
-    password <- getPostParameters "password"
-    
-    existingUser <- getUniqueUser ident
-    existingUserId <- createUserRecordAndReturnUserKey existingUser ident password  
+    ((result, widget), enctype) <- runFormPost userForm
+    case result of 
+      FormSuccess user -> do
+                        existingUser <- getUniqueUser (userIdent user)
+                        existingUserId <- createUserRecordAndReturnUserKey existingUser (userIdent user) (userPassword user)  
 
-    existingMember <- getUniqueMember existingUserId
-    _ <- createMemberRecordAndReturnMemberKey existingMember existingUserId ident
+                        existingMember <- getUniqueMember existingUserId
+                        _ <- createMemberRecordAndReturnMemberKey existingMember existingUserId (userIdent user)
  
-    defaultLayout $ do
-      $(widgetFile "SNTemplates/postSignup")
+                        defaultLayout $ do
+                          $(widgetFile "SNTemplates/postSignup")
+      _ -> defaultLayout
+           [whamlet|
+             <p>Invalid input, let's try again.
+             <form method=post action=@{SignupR} enctype=#{enctype}>
+                ^{widget}                
+                <button name="submit" class="submit">Submit
+           |] 
 
 putRegisterVerifyUserR :: Handler String
 putRegisterVerifyUserR = do

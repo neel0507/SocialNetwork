@@ -12,25 +12,6 @@ $(function(){
 	 var url = "@{LoginVerifyUserR}";
          var stringToCheck = "Invalid Username";
        }
-
-       $("#submit").click(function(event){
-                       
-             var pwd = $("#password").val();
-             var uname = $("#ident").val();
-
-             if(pwd.length == 0)
-             {             
-                 $("#password").focus();                     
-                 event.preventDefault();
-             }  
-
-             if(uname.length == 0)
-             {             
-                 $("#ident").focus();                     
-                 event.preventDefault();
-             }          
-
-       });
        
        $("#ident").blur(function(){                
 		var uname = $("#ident").val();
