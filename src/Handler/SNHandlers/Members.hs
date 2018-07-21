@@ -4,7 +4,6 @@ module Handler.SNHandlers.Members where
 
 import Import
 import Database.Persist.Sql
-import qualified Database.Esqueleto      as E
 
 getMembersR :: Handler Html
 getMembersR = do  
@@ -37,10 +36,9 @@ getMembersR = do
                     let removeMemberKey = getMemberKey removeMemberId                    
                     _ <- addMemberToDB addMemberId memberKey addMemberKey
                     _ <- removeMemberFromDB removeMemberId memberKey removeMemberKey
-                    followingMembersCount <- getFollowingMembersCount memberKey
-                    members <- getMembers followingMembersCount noMembers userKey
-                    followingMembers <- getFollowingMembers followingMembersCount noMembers memberKey       
-                    unFollowingMembers <- getUnFollowingMembers followingMembersCount noMembers memberKey userKey                    
+                    followingMembers <- getFollowingMembers memberKey                    
+                    members <- getMembers userKey       
+                    unFollowingMembers <- getUnFollowingMembers memberKey userKey                    
              
                     defaultLayout $ do                
                         $(widgetFile "SNTemplates/members")                                                        
@@ -56,9 +54,8 @@ getFriendsR = do
 
     if sessUserId > 0
          then do
-             let memberKey = getMemberKey sessUserId
-             followingMembersCount <- getFollowingMembersCount memberKey                    
-             followingMembers <- getFollowingMembers followingMembersCount noMembers memberKey
+             let memberKey = getMemberKey sessUserId                    
+             followingMembers <- getFollowingMembers memberKey             
 
              defaultLayout $ do
                  $(widgetFile "SNTemplates/friends")

@@ -17,9 +17,9 @@
         Private<input type="radio" id="messagetype" name="messagetype" value="on" Checked>
         <input id="submit" type="submit" name="messagetype" value="Post Message">
    <div class="info" id="noMessage" style="display:none">No messages yet
-   $forall (E.Value memberMessageId, E.Value fromMemberId, E.Value fromMember, E.Value messageType, E.Value time, E.Value message) <- messages
+   $forall (Entity memberMessageId memberMessage) <- messages
        <ul>
-         $if(messageType == True)
-           <li class="listItem">#{dateFormat $ time}--<a href="/messages?view=#{fromSqlKey $ fromMemberId}">#{fromMember}</a> whispered--&quot;#{message}&quot;--<a href="/messages?erase=#{fromSqlKey $ memberMessageId}">erase</a>
+         $if((memberMessageIsPrivateMessage memberMessage) == True)
+           <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}--<a href="/messages?view=#{fromSqlKey $ (memberMessageFromMemberId memberMessage)}">#{memberMessageFromMember memberMessage}</a> whispered--&quot;#{memberMessageMessage memberMessage}&quot;--<a href="/messages?erase=#{fromSqlKey $ memberMessageId}">erase</a>
          $else
-           <li class="listItem">#{dateFormat $ time}--<a href="/messages?view=#{fromSqlKey $ fromMemberId}">#{fromMember}</a> wrote--&quot;#{message}&quot;--<a href="/messages?erase=#{fromSqlKey $ memberMessageId}">erase</a>
+           <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}--<a href="/messages?view=#{fromSqlKey $ (memberMessageFromMemberId memberMessage)}">#{memberMessageFromMember memberMessage}</a> wrote--&quot;#{memberMessageMessage memberMessage}&quot;--<a href="/messages?erase=#{fromSqlKey $ memberMessageId}">erase</a>

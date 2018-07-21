@@ -4,9 +4,7 @@ module Handler.SNHandlers.Messages where
 
 import Import
 import Database.Persist.Sql
-import qualified Database.Esqueleto      as E
-import           Database.Esqueleto      ((^.))
-import           Text.Julius             (juliusFile)
+import Text.Julius  (juliusFile)
 
 
 getMessagesR :: Handler Html
@@ -26,20 +24,19 @@ getMessagesR = do
                   let memberMessageKey = getMemberMessageKey eraseMessageId
                   existingMessage <- getUniqueProfileMessage loggedInMemberKey
                   profileMessage <- getProfileMessage existingMessage "No Message Yet"
-                  messageRemoved <- removeMessageFromDB eraseMessageId memberMessageKey
-                  messageCount <- getMessageCount loggedInMemberKey                                
-                  
-                  if (messageCount > noMessage)
-                    then do
-                        messages <- getMemberMessages loggedInMemberKey 
+                  messageRemoved <- removeMessageFromDB eraseMessageId memberMessageKey                                                 
+                  messages <- getMemberMessages loggedInMemberKey
+
+                  if Prelude.null messages
+                    then
                         defaultLayout $ do              
                           addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
-                          $(widgetFile "SNTemplates/memberMessages")
-                          toWidget $(juliusFile "templates/SNTemplates/messages.julius")          
+                          $(widgetFile "SNTemplates/messages")                                 
                     else
                         defaultLayout $ do              
                           addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
-                          $(widgetFile "SNTemplates/messages")
+                          $(widgetFile "SNTemplates/memberMessages")
+                          toWidget $(juliusFile "templates/SNTemplates/messages.julius")
 
                Just un -> do
                   viewMemberId <- getMemberId uname  
@@ -48,19 +45,18 @@ getMessagesR = do
                   viewMemberName <- getMemberName viewMemberEntity "Does not exist"
                   viewProfileMessageEntity <- getUniqueProfileMessage $ getMemberKey viewMemberId
                   viewMemberMessage <- getProfileMessage viewProfileMessageEntity "No Message Yet"
-                  messageCount <- getMessageCount viewMemberKey                  
+                  messages <- getMemberMessages viewMemberKey                  
                  
-                  if (messageCount > noMessage)
-                    then do
-                        messages <- getMemberMessages viewMemberKey
-                        defaultLayout $ do              
-                          addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
-                          $(widgetFile "SNTemplates/viewMemberMessages")
-                          toWidget $(juliusFile "templates/SNTemplates/messages.julius")                         
-                    else
+                  if Prelude.null messages
+                    then
                         defaultLayout $ do              
                           addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
                           $(widgetFile "SNTemplates/viewMessages")
+                          toWidget $(juliusFile "templates/SNTemplates/messages.julius")                                 
+                    else
+                        defaultLayout $ do              
+                          addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
+                          $(widgetFile "SNTemplates/viewMemberMessages")
                           toWidget $(juliusFile "templates/SNTemplates/messages.julius")
 
            return page

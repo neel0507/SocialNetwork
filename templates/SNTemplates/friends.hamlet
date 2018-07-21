@@ -6,12 +6,12 @@
         <li><a href=@{SettingsR}>Settings </a>
         <li><a href=@{LogoutpageR}>Log Out </a>
    <br>
-   $if (followingMembersCount > noMembers)
-      <div class="message"><h2>You are Following</h2>
-      <ul class="memberlist">
-         $forall (E.Value memberId, E.Value followedMember) <- followingMembers
-           <li> #{followedMember}
-   $else
+   $if Prelude.null followingMembers
       <div class="message"><h2>No friends yet</h2>
       <ul class="menu">
-           <li><a href="@{MessagesR}">View Your Messages </a>
+           <li><a href="@{MessagesR}">View Your Messages </a>      
+   $else
+      <div class="message"><h2>You are Following</h2>
+      <ul class="memberlist">
+         $forall (Entity memberId member) <- followingMembers
+           <li> #{memberIdent member}

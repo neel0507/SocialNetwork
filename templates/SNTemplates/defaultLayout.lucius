@@ -65,7 +65,7 @@ a:hover { color             :#d04;}
   box-shadow        :2px 2px 2px #888;
 }
 
-.memberlist { margin-left: 60px; }
+.memberlist { margin-left: 40px; }
 
 .listItem { margin-left: 20px; }
 

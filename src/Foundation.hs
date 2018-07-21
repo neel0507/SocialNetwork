@@ -30,8 +30,7 @@ import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
 --import qualified Data.CaseInsensitive as CI
 --import qualified Data.Text.Encoding as TE
-import qualified Database.Esqueleto      as E
-import           Database.Esqueleto      ((^.))
+
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -307,12 +306,6 @@ userForm = renderDivs $ User
            }
 
 
-getPostParameters :: Text -> Handler Text 
-getPostParameters param= do
-       result <- runInputPost $ ireq textField param
-       return result
-
-
 getUniqueUser :: Text -> Handler (Maybe (Entity User))
 getUniqueUser val = do
        result <- liftHandler $ runDB $ getBy $ UniqueUser val
@@ -425,80 +418,28 @@ removeMemberFromDB rmId mKey removeMKey =
                  return $ fromSqlKey mKey
 
 
-emptyRecord :: [(E.Value (Key User), E.Value Text)]
-emptyRecord = [(E.Value (getUserKey 0), E.Value (pack ""))]
-
-
-getMembers :: [E.Value Int] -> [E.Value Int] -> Key User -> Handler [(E.Value (Key User), E.Value Text)]
-getMembers memberCount noMembers uKey= do
-   if memberCount == noMembers
-     then do
-         result <- runDB
-              $ E.select
-              $ E.from $ \member -> do                  
-                E.where_ $ member ^. MemberUserId E.!=. E.val uKey
-                return
-                 ( member ^. MemberUserId
-                 , member ^. MemberIdent
-                 )
+getMembers :: Key User -> Handler [Entity Member]
+getMembers uKey= do
+         result <- liftHandler $ runDB $ selectList [MemberUserId !=. uKey] [Asc MemberId]
          return result
-     else do                              
-         return emptyRecord
 
 
-getFollowingMembers :: [E.Value Int] -> [E.Value Int] -> Key Member -> Handler [(E.Value (Key User), E.Value Text)]
-getFollowingMembers memberCount noMembers mKey =
-              if memberCount > noMembers
-                  then  do
-                       result <- runDB
-                           $ E.select
-                           $ E.from $ \(followingMembers `E.InnerJoin` member) -> do                  
-                             E.on $ followingMembers ^. FollowingMembersFollowingMemberId E.==. member ^. MemberId
-                             E.where_ $ followingMembers ^. FollowingMembersMemberId E.==. E.val mKey                                   
-                             return
-                              ( member ^. MemberUserId
-                              , member ^. MemberIdent
-                              )
-                       return result
-                  else  do                                           
-                       return emptyRecord
+getUnFollowingMembers :: Key Member -> Key User -> Handler [Entity Member]
+getUnFollowingMembers mKey uKey = liftHandler $ runDB $ rawSql s [(toPersistValue uKey), (toPersistValue mKey)]
+                          where s = "SELECT ?? \
+                                    \FROM member \
+                                    \WHERE member.user_id != ? AND member.id NOT IN \
+                                     \(SELECT following_member_id \
+                                      \FROM following_members \
+                                      \WHERE following_members.member_id = ?)"                                                      
+                        
 
-
-getUnFollowingMembers :: [E.Value Int] -> [E.Value Int] -> Key Member -> Key User -> Handler [(E.Value (Key User), E.Value Text)]
-getUnFollowingMembers memberCount noMembers mKey uKey =
-              if memberCount > noMembers
-                    then do
-                        result <- runDB
-                         $ E.select
-                         $ E.from $ \member -> do                                                    
-                           E.where_ ((member ^. MemberUserId E.!=. E.val uKey) E.&&.
-                                     (member ^. MemberId `E.notIn` (E.subList_select 
-                                                                  $ E.from $ \followingMembersDB -> do
-                                                                    E.where_ (followingMembersDB ^. FollowingMembersMemberId E.==. E.val mKey) 
-                                                                    return (followingMembersDB ^. FollowingMembersFollowingMemberId))))                            
-                           return
-                            ( member ^. MemberUserId
-                            , member ^. MemberIdent
-                            ) 
-                        return result
-                    else do                        
-                        return emptyRecord
-
-getFollowingMembersCount :: Key Member -> Handler [E.Value Int]
-getFollowingMembersCount mKey = do
-             result <- runDB
-                     $ E.select
-                     $ E.from $ \(followingMembers `E.InnerJoin` member) -> do                  
-                       E.on $ followingMembers ^. FollowingMembersFollowingMemberId E.==. member ^. MemberId
-                       E.where_ $ followingMembers ^. FollowingMembersMemberId E.==. E.val mKey
-                       let cnt = E.countRows :: E.SqlExpr (E.Value Int)                 
-                       return
-                         cnt                    
-             return result
-
-
-noMembers :: [E.Value Int]
-noMembers = [E.Value (0::Int)]
+getFollowingMembers :: Key Member -> Handler [Entity Member]  
+getFollowingMembers mKey = liftHandler $ runDB $ rawSql s [toPersistValue mKey]
+                 where s = "SELECT ?? \
+                           \FROM following_members INNER JOIN member \
+                           \ON following_members.following_member_id = member.id \
+                           \WHERE following_members.member_id = ?"
 
 
 updateMessage :: Key Member -> Textarea -> Handler Int64
@@ -536,23 +477,7 @@ dateFormat = formatTime defaultTimeLocale "%d/%m/%Y %I:%M:%S %p"
 
 
 addMinutes :: NominalDiffTime -> UTCTime -> UTCTime
-addMinutes minutes = addUTCTime (minutes * 60)
-
-
-noMessage :: [E.Value Int]
-noMessage =  [E.Value (0::Int)]
-
-
-getMessageCount :: Key Member -> Handler [E.Value Int]
-getMessageCount mKey = do
-       result <- runDB
-           $ E.select
-           $ E.from $ \memberMessage -> do                  
-             E.where_ $ memberMessage ^. MemberMessageMemberId E.==. E.val mKey
-             let cnt = E.countRows :: E.SqlExpr (E.Value Int)                 
-             return
-               cnt
-       return result   
+addMinutes minutes = addUTCTime (minutes * 60) 
 
 
 getLocalTime :: IO UTCTime
@@ -561,20 +486,9 @@ getLocalTime = do
     return (addMinutes 60 result)
 
 
-getMemberMessages :: Key Member -> Handler [(E.Value (Key MemberMessage), E.Value (Key Member), E.Value Text, E.Value Bool, E.Value UTCTime, E.Value Textarea)]
+getMemberMessages :: Key Member -> Handler [Entity MemberMessage]
 getMemberMessages mKey = do      
-           result <- runDB
-            $ E.select
-            $ E.from $ \memberMessage -> do                  
-              E.where_ $ memberMessage ^. MemberMessageMemberId E.==. E.val mKey
-              return
-               (  memberMessage ^. MemberMessageId
-                , memberMessage ^. MemberMessageFromMemberId
-                , memberMessage ^. MemberMessageFromMember
-                , memberMessage ^. MemberMessageIsPrivateMessage
-                , memberMessage ^. MemberMessageTime
-                , memberMessage ^. MemberMessageMessage
-               ) 
+           result <- liftHandler $ runDB $ selectList [MemberMessageMemberId ==. mKey] [Asc MemberMessageId]
            return result               
 
          
