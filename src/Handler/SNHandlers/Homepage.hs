@@ -3,6 +3,7 @@
 module Handler.SNHandlers.Homepage where
 
 import Import
+import Database.Persist.Sql
 
 getHomepageR :: Handler Html
 getHomepageR = do
@@ -17,10 +18,4 @@ getHomepageR = do
               $(widgetFile "SNTemplates/validUser")              
         else
             defaultLayout $ do
-              $(widgetFile "SNTemplates/homepage")              
-
-getLogoutpageR :: Handler Html
-getLogoutpageR = do
-    deleteSession "User_Id"
-    defaultLayout $ do       
-       $(widgetFile "SNTemplates/homepage")
+              $(widgetFile "SNTemplates/homepage")        

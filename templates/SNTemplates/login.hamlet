@@ -1,12 +1,16 @@
    <ul class="menu">
         <li><a href=@{HomepageR}>Home </a>
         <li><a href=@{SignupR}>Sign Up </a>
-        <li><a href=@{LoginpageR}>Log In </a>
+        <li><a href=@{LoginpageR LoginR}>Log In </a>
    <br>
    <span class="info">&#8658; You must be logged in to view this page.
-   <br>   
-   <div class="message"><b>Please enter your details to log in</b> 
+   $maybe msg <- mmsg
+        <div class="loginMessage" #message>#{msg}  
+   <div class="messageAdj"><b>Please enter your details to log in</b> 
    <div class="message">Your have entered: <span id="vu" class="validUser">a valid username</span><span id="ivu" class="inValidUser">an invalid username</span>
-   <form method=post action=@{LoginpageR} enctype=#{enctype}>
-     <div class="userInput">^{widget}                
-     <button name="submit" class="submit">Submit
+   <form action=@{action} method=post>
+     $maybe tok <- mtok
+            <input type=hidden name=#{defaultCsrfParamName} value=#{tok}>
+     <div class="userInput">      
+      <div><label for="username"> Username </label><input id="username" name="username" type="text" class="usernameField" required><div><label for="password"> Password </label><input id="password" name="password" type="password" class="passwordField" required></div><input value="Submit" type="submit" class="submit">
+

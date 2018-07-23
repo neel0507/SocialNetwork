@@ -9,108 +9,94 @@ import Text.Julius  (juliusFile)
 
 getMessagesR :: Handler Html
 getMessagesR = do
-    uid <- lookupSession "User_Id"
-    sessUserId <- getMemberId uid
+    (userId, user) <- requireAuthPair      
+    let loggedInUserId = fromSqlKey userId
+    uname <- lookupGetParam "view"                    
 
-    if sessUserId > 0
-       then do
-           uname <- lookupGetParam "view"                    
+    page <- case uname of
+         Nothing -> do
+            let loggedInMemberKey = getMemberKey loggedInUserId
+            eraseMessage <- lookupGetParam "erase" 
+            eraseMessageId <- getMemberId eraseMessage
+            let memberMessageKey = getMemberMessageKey eraseMessageId
+            existingMessage <- getUniqueProfileMessage loggedInMemberKey
+            profileMessage <- getProfileMessage existingMessage "No message Yet"
+            messageRemoved <- removeMessageFromDB eraseMessageId memberMessageKey                                                 
+            messages <- getMemberMessages loggedInMemberKey
 
-           page <- case uname of
-               Nothing -> do
-                  let loggedInMemberKey = getMemberKey sessUserId
-                  eraseMessage <- lookupGetParam "erase" 
-                  eraseMessageId <- getMemberId eraseMessage
-                  let memberMessageKey = getMemberMessageKey eraseMessageId
-                  existingMessage <- getUniqueProfileMessage loggedInMemberKey
-                  profileMessage <- getProfileMessage existingMessage "No Message Yet"
-                  messageRemoved <- removeMessageFromDB eraseMessageId memberMessageKey                                                 
-                  messages <- getMemberMessages loggedInMemberKey
+            if Prelude.null messages
+               then
+                   defaultLayout $ do              
+                     addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
+                     $(widgetFile "SNTemplates/messages")                                 
+               else
+                   defaultLayout $ do              
+                     addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
+                     $(widgetFile "SNTemplates/memberMessages")
+                     toWidget $(juliusFile "templates/SNTemplates/messages.julius")
 
-                  if Prelude.null messages
-                    then
-                        defaultLayout $ do              
-                          addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
-                          $(widgetFile "SNTemplates/messages")                                 
-                    else
-                        defaultLayout $ do              
-                          addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
-                          $(widgetFile "SNTemplates/memberMessages")
-                          toWidget $(juliusFile "templates/SNTemplates/messages.julius")
-
-               Just un -> do
-                  viewMemberId <- getMemberId uname  
-                  let viewMemberKey = getMemberKey viewMemberId
-                  viewMemberEntity <- getUniqueMember $ getUserKey viewMemberId
-                  viewMemberName <- getMemberName viewMemberEntity "Does not exist"
-                  viewProfileMessageEntity <- getUniqueProfileMessage $ getMemberKey viewMemberId
-                  viewMemberMessage <- getProfileMessage viewProfileMessageEntity "No Message Yet"
-                  messages <- getMemberMessages viewMemberKey                  
+         Just un -> do
+            viewMemberId <- getMemberId uname  
+            let viewMemberKey = getMemberKey viewMemberId
+            viewMemberEntity <- getUniqueMember $ getUserKey viewMemberId
+            viewMemberName <- getMemberName viewMemberEntity "Does not exist"
+            viewProfileMessageEntity <- getUniqueProfileMessage $ getMemberKey viewMemberId
+            viewMemberMessage <- getProfileMessage viewProfileMessageEntity "No message Yet"
+            messages <- getMemberMessages viewMemberKey                  
                  
-                  if Prelude.null messages
-                    then
-                        defaultLayout $ do              
-                          addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
-                          $(widgetFile "SNTemplates/viewMessages")
-                          toWidget $(juliusFile "templates/SNTemplates/messages.julius")                                 
-                    else
-                        defaultLayout $ do              
-                          addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
-                          $(widgetFile "SNTemplates/viewMemberMessages")
-                          toWidget $(juliusFile "templates/SNTemplates/messages.julius")
-
-           return page
-          
-       else
-           redirect LoginpageR
-       
-
-postMessagesR :: Handler Html
-postMessagesR = do
-    uid <- lookupSession "User_Id"
-    sessUserId <- getMemberId uid
-
-    if sessUserId > 0
-       then do
-           uname <- lookupGetParam "view"
-           
-           message <- runInputPost $ ireq textareaField "txtarea"
-           messageType <- runInputPost $ ireq boolField "messagetype"
-           time <- liftIO getLocalTime           
-           let loggedInMemberKey = getMemberKey sessUserId
-           let loggedInUserKey = getUserKey sessUserId
-           fromMemberEntity <- getUniqueMember loggedInUserKey
-           fromMemberName <- getMemberName fromMemberEntity "Does not exist"
-
-           page <- case uname of
-               Nothing -> do
-                  existingMessage <- getUniqueProfileMessage loggedInMemberKey
-                  profileMessage <- getProfileMessage existingMessage "No message yet"
-                  insertMessage <- runDB $ insert $ MemberMessage loggedInMemberKey loggedInMemberKey fromMemberName messageType time message
-                  messages <- getMemberMessages loggedInMemberKey
-
+            if Prelude.null messages
+               then
                   defaultLayout $ do              
                     addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
-                    $(widgetFile "SNTemplates/memberMessages")
-                    toWidget $(juliusFile "templates/SNTemplates/messages.julius")                                             
-
-               Just un -> do                                    
-                  viewMemberId <- getMemberId uname                  
-                  let viewMemberKey = getMemberKey viewMemberId                 
-                  viewMemberEntity <- getUniqueMember $ getUserKey viewMemberId
-                  viewMemberName <- getMemberName viewMemberEntity "Does not exist"
-                  viewProfileMessageEntity <- getUniqueProfileMessage $ getMemberKey viewMemberId
-                  viewMemberMessage <- getProfileMessage viewProfileMessageEntity "No Message Yet"
-                  insertMessage <- runDB $ insert $ MemberMessage viewMemberKey loggedInMemberKey fromMemberName messageType time message
-                  messages <- getMemberMessages viewMemberKey
- 
+                    $(widgetFile "SNTemplates/viewMessages")
+                    toWidget $(juliusFile "templates/SNTemplates/messages.julius")                                 
+               else
                   defaultLayout $ do              
                     addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
                     $(widgetFile "SNTemplates/viewMemberMessages")
-                    toWidget $(juliusFile "templates/SNTemplates/messages.julius")                    
-                         
-           return page
-              
-       else
-           redirect LoginpageR
+                    toWidget $(juliusFile "templates/SNTemplates/messages.julius")
 
+    return page
+          
+postMessagesR :: Handler Html
+postMessagesR = do
+    (userId, user) <- requireAuthPair      
+    let loggedInUserId = fromSqlKey userId
+    uname <- lookupGetParam "view"
+           
+    message <- runInputPost $ ireq textareaField "txtarea"
+    messageType <- runInputPost $ ireq boolField "messagetype"
+    time <- liftIO getLocalTime           
+    let loggedInMemberKey = getMemberKey loggedInUserId
+    let loggedInUserKey = getUserKey loggedInUserId
+    fromMemberEntity <- getUniqueMember loggedInUserKey
+    fromMemberName <- getMemberName fromMemberEntity "Does not exist"
+
+    page <- case uname of
+        Nothing -> do
+            existingMessage <- getUniqueProfileMessage loggedInMemberKey
+            profileMessage <- getProfileMessage existingMessage "No message yet"
+            insertMessage <- runDB $ insert $ MemberMessage loggedInMemberKey loggedInMemberKey fromMemberName messageType time message
+            messages <- getMemberMessages loggedInMemberKey
+
+            defaultLayout $ do              
+               addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
+               $(widgetFile "SNTemplates/memberMessages")
+               toWidget $(juliusFile "templates/SNTemplates/messages.julius")                                             
+
+        Just un -> do                                    
+            viewMemberId <- getMemberId uname                  
+            let viewMemberKey = getMemberKey viewMemberId                 
+            viewMemberEntity <- getUniqueMember $ getUserKey viewMemberId
+            viewMemberName <- getMemberName viewMemberEntity "Does not exist"
+            viewProfileMessageEntity <- getUniqueProfileMessage $ getMemberKey viewMemberId
+            viewMemberMessage <- getProfileMessage viewProfileMessageEntity "No message Yet"
+            insertMessage <- runDB $ insert $ MemberMessage viewMemberKey loggedInMemberKey fromMemberName messageType time message
+            messages <- getMemberMessages viewMemberKey
+ 
+            defaultLayout $ do              
+               addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"             
+               $(widgetFile "SNTemplates/viewMemberMessages")
+               toWidget $(juliusFile "templates/SNTemplates/messages.julius")                    
+                         
+    return page

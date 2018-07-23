@@ -1,20 +1,19 @@
 $(function(){  
      
        var pageURL = $(location).attr("href").split("/");
-
        if (pageURL[3] == "signup")
        {
        	 var url = "@{RegisterVerifyUserR}";
          var stringToCheck = "User exists";
        }
-       else if (pageURL[3] == "login")
+       else if (pageURL[4] == "login")
        {
 	 var url = "@{LoginVerifyUserR}";
          var stringToCheck = "Invalid Username";
        }
        
-       $("#ident").blur(function(){                
-		var uname = $("#ident").val();
+       $("#username").blur(function(){                
+		var uname = $("#username").val();
                 
                 if(uname.length > 0)
                 {

@@ -16,21 +16,18 @@ import Prelude
 import Import.NoFoundation
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
 import Text.Lucius          (luciusFile)
+import Text.Julius          (juliusFile)
 import Text.Jasmine         (minifym)
 import Control.Monad.Logger (LogSource)
 import Database.Persist.Sql
 import Data.Time
-
--- Used only when in "auth-dummy-login" setting is enabled.
-import Yesod.Auth.Dummy
-
-import Yesod.Auth.OpenId    (authOpenId, IdentifierType (Claimed))
+import Yesod.Auth.Message
 import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
 --import qualified Data.CaseInsensitive as CI
 --import qualified Data.Text.Encoding as TE
-
+import Yesod.Auth.HashDB (authHashDBWithForm, setPassword)
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -75,6 +72,15 @@ type Form x = Html -> MForm (HandlerFor App) (FormResult x, Widget)
 type DB a = forall (m :: * -> *).
     (MonadIO m) => ReaderT SqlBackend m a
 
+
+-- Useful when writing code that is re-usable outside of the Handler context.
+-- An example is background jobs that send email.
+-- This can also be useful for writing code that works across multiple Yesod applications.
+instance HasHttpManager App where
+    getHttpManager :: App -> Manager
+    getHttpManager = appHttpManager
+
+
 -- Please see the documentation for the Yesod typeclass. There are a number
 -- of settings which can be configured by overriding methods here.
 instance Yesod App where
@@ -106,7 +112,6 @@ instance Yesod App where
     defaultLayout :: Widget -> Handler Html
     defaultLayout widget = do
         uid <- lookupSession "User_Id"
-        
         member <- case uid of
            Just uid -> runDB $ getBy $ UniqueMember (toSqlKey ((read $ unpack uid)::Int64))
            Nothing -> return Nothing
@@ -114,9 +119,10 @@ instance Yesod App where
         memberName <- case member of
            Just (Entity memberId member) -> return $ unpack (memberIdent member)
            Nothing -> return "" 
+
         let memberNameLength = Prelude.length memberName
-        pc <- widgetToPageContent $ do 
-           widget
+        pc <- widgetToPageContent $ do
+           widget 
            toWidget $(luciusFile "templates/SNTemplates/defaultLayout.lucius")
         withUrlRenderer
          [hamlet|
@@ -131,7 +137,7 @@ instance Yesod App where
                      $if memberNameLength > 0                        
                            <div class="title">Social Network (#{memberName})
                      $else
-                           <div class="title">Social Network                   
+                           <div class="title">Social Network               
                      ^{pageBody pc}            
         |]
 
@@ -139,24 +145,18 @@ instance Yesod App where
     authRoute
         :: App
         -> Maybe (Route App)
-    authRoute _ = Just $ AuthR LoginR
+    authRoute _ = Just $ LoginpageR LoginR
 
     isAuthorized
         :: Route App  -- ^ The route the user is visiting.
         -> Bool       -- ^ Whether or not this is a "write" request.
         -> Handler AuthResult
     -- Routes not requiring authentication.
-    isAuthorized (AuthR _) _ = return Authorized
+    isAuthorized (LoginpageR _) _ = return Authorized
     isAuthorized CommentR _ = return Authorized
     isAuthorized HomeR _ = return Authorized
     isAuthorized HomepageR _ = return Authorized
-    isAuthorized SignupR _ = return Authorized  
-    isAuthorized LoginpageR _ = return Authorized
-    isAuthorized MembersR _ = return Authorized
-    isAuthorized FriendsR _ = return Authorized
-    isAuthorized MessagesR _ = return Authorized
-    isAuthorized SettingsR _ = return Authorized
-    isAuthorized LogoutpageR _ = return Authorized
+    isAuthorized SignupR _ = return Authorized
     isAuthorized RegisterVerifyUserR _ = return Authorized
     isAuthorized LoginVerifyUserR _ = return Authorized
     isAuthorized FaviconR _ = return Authorized
@@ -167,6 +167,10 @@ instance Yesod App where
     -- the profile route requires that the user is authenticated, so we
     -- delegate to that function
     isAuthorized ProfileR _ = isAuthenticated
+    isAuthorized MembersR _ = isAuthenticated
+    isAuthorized FriendsR _ = isAuthenticated
+    isAuthorized MessagesR _ = isAuthenticated
+    isAuthorized SettingsR _ = isAuthenticated
 
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
@@ -204,18 +208,6 @@ instance Yesod App where
     makeLogger :: App -> IO Logger
     makeLogger = return Prelude.. appLogger
 
--- Define breadcrumbs.
-instance YesodBreadcrumbs App where
-    -- Takes the route that the user is currently on, and returns a tuple
-    -- of the 'Text' that you want the label to display, and a previous
-    -- breadcrumb route.
-    breadcrumb
-        :: Route App  -- ^ The route the user is visiting currently.
-        -> Handler (Text, Maybe (Route App))
-    breadcrumb HomeR = return ("Home", Nothing)
-    breadcrumb (AuthR _) = return ("Login", Just HomeR)
-    breadcrumb ProfileR = return ("Profile", Just HomeR)
-    breadcrumb  _ = return ("home", Nothing)
 
 -- How to run database actions.
 instance YesodPersist App where
@@ -229,35 +221,51 @@ instance YesodPersistRunner App where
     getDBRunner :: Handler (DBRunner App, Handler ())
     getDBRunner = defaultGetDBRunner appConnPool
 
+
 instance YesodAuth App where
     type AuthId App = UserId
-
+    
     -- Where to send a user after successful login
     loginDest :: App -> Route App
-    loginDest _ = HomeR
+    loginDest _ = HomepageR
     -- Where to send a user after logout
     logoutDest :: App -> Route App
-    logoutDest _ = HomeR
+    logoutDest _ = HomepageR
+    onLogout = do
+         setMessage ""
+         deleteSession "User_Id"
     -- Override the above two destinations when a Referer: header is present
     redirectToReferer :: App -> Bool
-    redirectToReferer _ = True    
+    redirectToReferer _ = False
 
-    authenticate :: (MonadHandler m, HandlerSite m ~ App)
-                 => Creds App -> m (AuthenticationResult App)
+    -- You can add other plugins like BrowserID, email or OAuth here
+    authPlugins :: App -> [AuthPlugin App]
+    authPlugins _ = [authHashDBWithForm loginPageForm (Just Prelude.. UniqueUser)]
+       where
+            loginPageForm :: Route App -> Widget
+            loginPageForm action = do
+                    mmsg <- getMessage
+                    request <- getRequest
+                    let mtok = reqToken request
+                    result <- $(whamletFile "templates/SNTemplates/login.hamlet")
+                    addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
+                    toWidget $(juliusFile "templates/SNTemplates/reglogin.julius")
+                    return result
+    
     authenticate creds = liftHandler $ runDB $ do
         x <- getBy $ UniqueUser $ credsIdent creds
-        case x of
-            Just (Entity uid _) -> return $ Authenticated uid
-            Nothing -> Authenticated <$> insert User
-                { userIdent = credsIdent creds
-                , userPassword = ""
-                }
+        _ <- liftHandler $ setUserSessionId x
+        return $ case x of
+            Nothing -> UserError InvalidLogin
+            Just (Entity uid _) -> Authenticated uid
 
-    -- You can add other plugins like Google Email, email or OAuth here
-    authPlugins :: App -> [AuthPlugin App]
-    authPlugins app = [authOpenId Claimed []] Prelude.++ extraAuthPlugins
-        -- Enable authDummy login if enabled.
-        where extraAuthPlugins = [authDummy | appAuthDummyLogin $ appSettings app]
+    loginHandler = do
+        ma <- liftHandler $ maybeAuthId
+        when (isJust ma) $
+            liftHandler $ redirect HomepageR
+        defaultLoginHandler
+
+    authHttpManager = authHttpManager
 
 -- | Access function to determine if a user is logged in.
 isAuthenticated :: Handler AuthResult
@@ -275,33 +283,27 @@ instance RenderMessage App FormMessage where
     renderMessage :: App -> [Lang] -> FormMessage -> Text
     renderMessage _ _ = defaultFormMessage
 
--- Useful when writing code that is re-usable outside of the Handler context.
--- An example is background jobs that send email.
--- This can also be useful for writing code that works across multiple Yesod applications.
-instance HasHttpManager App where
-    getHttpManager :: App -> Manager
-    getHttpManager = appHttpManager
 
 unsafeHandler :: App -> Handler a -> IO a
 unsafeHandler = Unsafe.fakeHandlerGetLogger appLogger
 
 
-userForm :: Html -> MForm Handler (FormResult User, Widget)
+userForm :: Form User
 userForm = renderDivs $ User
     <$> areq textField userNameSettings Nothing
-    <*> areq textField passwordSettings Nothing
+    <*> areq passwordField passwordSettings Nothing
     where userNameSettings = FieldSettings
            { fsLabel = "Username",
              fsTooltip = Nothing,
-             fsId = Just "ident",
-             fsName = Just "ident",
+             fsId = Just "username",
+             fsName = Just "username",
              fsAttrs = [("class","usernameField")]
            }
           passwordSettings = FieldSettings
            { fsLabel = "Password",
              fsTooltip = Nothing,
-             fsId = Just "Password",
-             fsName = Just "Password",
+             fsId = Just "password",
+             fsName = Just "password",
              fsAttrs = [("class","passwordField")]
            }
 
@@ -327,12 +329,15 @@ getUniqueProfileMessage val = do
 createUserRecordAndReturnUserKey :: Maybe (Entity User) -> Text -> Text -> Handler (Key User)
 createUserRecordAndReturnUserKey userEntity uname pass = do
         result <- case userEntity of
-           Nothing ->
-             liftHandler $ runDB $ insert $ User
-              { userIdent = uname
-              , userPassword = pass
-              }
-           Just (Entity userId _) -> return userId
+           Nothing -> do
+             let user = User uname ""
+             userPass <- setPassword pass user
+             insertedUser <- runDB $ insertBy $ userPass
+             return $
+                case insertedUser of
+                   Left (Entity userid _) -> userid -- newly added user
+                   Right userid -> userid -- existing user
+           Just (Entity userId _) -> return userId --existing user
         return result
 
 
@@ -352,15 +357,8 @@ setUserSessionId :: Maybe (Entity User) -> Handler ()
 setUserSessionId userEntity = do
           result <- case userEntity of
                 Just(Entity userId _) -> setSession "User_Id" (pack $ show $ fromSqlKey userId)
-                Nothing -> setSession "User_Id" "0"
+                Nothing -> deleteSession "User_Id"
           return result
-
-
-isSiteUser :: Maybe (Entity User) -> Text -> Handler Bool
-isSiteUser userEntity password = do
-          return $ case userEntity of
-             Nothing -> False
-             Just (Entity _ sqlUser) -> (unpack password) == (unpack (userPassword sqlUser))
 
 
 getUserKey :: Int64 -> Key User

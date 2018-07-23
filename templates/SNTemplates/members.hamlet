@@ -4,7 +4,7 @@
         <li><a href=@{FriendsR}>Friends </a>
         <li><a href=@{MessagesR}>Messages </a>
         <li><a href=@{SettingsR}>Settings </a>
-        <li><a href=@{LogoutpageR}>Log Out </a>
+        <li><a href=@{LoginpageR LogoutR}>Log Out </a>
    <br>
    <div class="message"><h2>Other Members</h2>
                                      <ul> 

@@ -21,3 +21,8 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"]
     $(persistFileWith lowerCaseSettings "config/models")
 
 
+instance HashDBUser User where
+    userPasswordHash = Just . userPassword
+    setPasswordHash h u = u { userPassword = h }
+
+

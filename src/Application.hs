@@ -46,7 +46,6 @@ import Handler.Comment
 import Handler.Profile
 import Handler.SNHandlers.Homepage
 import Handler.SNHandlers.Signup
-import Handler.SNHandlers.Loginpage
 import Handler.SNHandlers.Members
 import Handler.SNHandlers.Messages
 import Handler.SNHandlers.Settings

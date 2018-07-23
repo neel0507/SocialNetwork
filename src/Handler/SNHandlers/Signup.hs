@@ -2,7 +2,6 @@
 
 module Handler.SNHandlers.Signup where
 import Text.Julius          (juliusFile)
-
 import Import
 
 getSignupR :: Handler Html
@@ -43,3 +42,13 @@ putRegisterVerifyUserR = do
             return "User exists"              
         else
             return "Username available"
+
+
+putLoginVerifyUserR :: Handler String
+putLoginVerifyUserR = do
+     user <- requireJsonBody :: Handler User
+     existingUser <- runDB $ count [UserIdent ==. (userIdent user)]
+     if (existingUser > 0)
+        then return "Valid Username"
+     else
+             return "Invalid Username"
