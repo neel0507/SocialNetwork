@@ -6,37 +6,31 @@ import Import
 
 getSignupR :: Handler Html
 getSignupR = do
-    (widget, enctype) <- generateFormPost userForm    
+    (widget, enctype) <- generateFormPost userForm --Generate the sign up form    
     defaultLayout $ do
-       addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
-       $(widgetFile "SNTemplates/signup")
-       toWidget $(juliusFile "templates/SNTemplates/reglogin.julius")
+       addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js" --Jquery script
+       $(widgetFile "SNTemplates/signup") --template for signing up
+       toWidget $(juliusFile "templates/SNTemplates/reglogin.julius") --associated javascript file
 
 postSignupR :: Handler Html
 postSignupR = do
-    ((result, widget), enctype) <- runFormPost userForm
+    ((result, widget), enctype) <- runFormPost userForm --Get user registration details 
     case result of 
       FormSuccess user -> do
-                        existingUser <- getUniqueUser (userIdent user)
-                        existingUserId <- createUserRecordAndReturnUserKey existingUser (userIdent user) (userPassword user)  
+                        existingUser <- getUniqueUser (userIdent user) --Identify if it an existing user
+                        existingUserId <- createUserRecordAndReturnUserKey existingUser (userIdent user) (userPassword user) --Insert user details in the database  
 
-                        existingMember <- getUniqueMember existingUserId
-                        _ <- createMemberRecordAndReturnMemberKey existingMember existingUserId (userIdent user)
+                        existingMember <- getUniqueMember existingUserId --Identify if the user already exists as a member
+                        _ <- createMemberRecordAndReturnMemberKey existingMember existingUserId (userIdent user) --Insert member details in the database
  
                         defaultLayout $ do
-                          $(widgetFile "SNTemplates/postSignup")
-      _ -> defaultLayout
-           [whamlet|
-             <p>Invalid input, let's try again.
-             <form method=post action=@{SignupR} enctype=#{enctype}>
-                ^{widget}                
-                <button name="submit" class="submit">Submit
-           |] 
+                          $(widgetFile "SNTemplates/postSignup") --template to display after signup
+      _ -> redirect SignupR --If unsuccessful signup 
 
 putRegisterVerifyUserR :: Handler String
 putRegisterVerifyUserR = do
-     user <- requireJsonBody :: Handler User
-     existingUser <- runDB $ count [UserIdent ==. (userIdent user)]    
+     user <- requireJsonBody :: Handler User --Get Json data
+     existingUser <- runDB $ count [UserIdent ==. (userIdent user)] --Identify if it is an existing user   
      if (existingUser > 0)
         then
             return "User exists"              
@@ -46,8 +40,8 @@ putRegisterVerifyUserR = do
 
 putLoginVerifyUserR :: Handler String
 putLoginVerifyUserR = do
-     user <- requireJsonBody :: Handler User
-     existingUser <- runDB $ count [UserIdent ==. (userIdent user)]
+     user <- requireJsonBody :: Handler User --Get Json data
+     existingUser <- runDB $ count [UserIdent ==. (userIdent user)] --Identify if it is an existing user
      if (existingUser > 0)
         then return "Valid Username"
      else

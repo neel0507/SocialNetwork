@@ -4,39 +4,32 @@ module Handler.SNHandlers.Settings where
 
 import Import
 import Database.Persist.Sql
-import           Text.Julius             (juliusFile)
+import Text.Julius             (juliusFile)
 
 getSettingsR :: Handler Html
 getSettingsR = do
-    (userId, user) <- requireAuthPair      
-    let loggedInUserId = fromSqlKey userId
-    let memberKey = getMemberKey loggedInUserId
+    (userId, user) <- requireAuthPair --Get user details after authentication      
+    let loggedInUserId = fromSqlKey userId --Get logged in user id 
+    let memberKey = getMemberKey loggedInUserId --Get logged in member key
 
-    existingMessage <- getUniqueProfileMessage memberKey
-    message <- getProfileMessage existingMessage "No message Yet"
+    existingMessage <- getUniqueProfileMessage memberKey --Get profile message entity
+    message <- getProfileMessage existingMessage "No message Yet" --Get profile message
 
     defaultLayout $ do
-       addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
-       $(widgetFile "SNTemplates/settings")
-       toWidget $(juliusFile "templates/SNTemplates/messages.julius")
+       addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js" --jQuery script
+       $(widgetFile "SNTemplates/settings") --template to display settings page
+       toWidget $(juliusFile "templates/SNTemplates/messages.julius") --Associated javascript file
     
 postSettingsR :: Handler Html
 postSettingsR = do
-    (userId, user) <- requireAuthPair      
-    let loggedInUserId = fromSqlKey userId
+    (userId, user) <- requireAuthPair --Get user details from authentication      
+    let loggedInUserId = fromSqlKey userId --Get logged in user id
+    let memberKey = getMemberKey loggedInUserId --Get entity member key
 
-    message <- runInputPost $ ireq textareaField "txtarea"
+    message <- runInputPost $ ireq textareaField "txtarea" --Get user message
 
-    let memberKey = getMemberKey loggedInUserId
+    existingMessage <- getUniqueProfileMessage memberKey --Get profile message entity
 
-    existingMessage <- getUniqueProfileMessage memberKey
+    insertedMessage <- insertMessage existingMessage memberKey message --Insert the message in database
 
-    updatedMessage <- case existingMessage of
-         Just (Entity _ _) -> updateMessage memberKey message
-         Nothing -> return messageNotUpdated
-
-    _ <- insertMessage updatedMessage memberKey message
-
-    defaultLayout $ do
-       addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
-       $(widgetFile "SNTemplates/settings")      
+    redirect SettingsR --redirect to the settings page     

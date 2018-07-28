@@ -16,8 +16,10 @@
         Public<input type="radio" id="messagetype" name="messagetype" value="no">
         Private<input type="radio" id="messagetype" name="messagetype" value="on" Checked>
         <input id="submit" type="submit" name="messagetype" value="Post Message">
-   <div class="info" id="noMessage" style="display:none">No messages yet
-   $forall (Entity memberMessageId memberMessage) <- messages
+   $if Prelude.null messages 
+     <div class="info" id="noMessage" >No messages yet
+   $else
+     $forall (Entity memberMessageId memberMessage) <- messages
        <ul>
          $if((memberMessageIsPrivateMessage memberMessage) == True)
            <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}--<a href="/messages?view=#{fromSqlKey $ (memberMessageFromMemberId memberMessage)}">#{memberMessageFromMember memberMessage}</a> whispered--&quot;#{memberMessageMessage memberMessage}&quot;--<a href="/messages?erase=#{fromSqlKey $ memberMessageId}">erase</a>

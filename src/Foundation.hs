@@ -19,7 +19,7 @@ import Text.Lucius          (luciusFile)
 import Text.Julius          (juliusFile)
 import Text.Jasmine         (minifym)
 import Control.Monad.Logger (LogSource)
-import Database.Persist.Sql
+import Database.Persist.Sql as PersQ
 import Data.Time
 import Yesod.Auth.Message
 import Yesod.Default.Util   (addStaticContentExternal)
@@ -28,7 +28,7 @@ import qualified Yesod.Core.Unsafe as Unsafe
 --import qualified Data.CaseInsensitive as CI
 --import qualified Data.Text.Encoding as TE
 import Yesod.Auth.HashDB (authHashDBWithForm, setPassword)
-
+import Database.Esqueleto as E    
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
 -- starts running, such as database connections. Every handler will have
@@ -171,7 +171,8 @@ instance Yesod App where
     isAuthorized FriendsR _ = isAuthenticated
     isAuthorized MessagesR _ = isAuthenticated
     isAuthorized SettingsR _ = isAuthenticated
-
+    isAuthorized (ViewMemberR _) _ = isAuthenticated
+    isAuthorized (ViewMemberMessagesR _) _ = isAuthenticated
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
     -- expiration dates to be set far in the future without worry of
@@ -316,8 +317,15 @@ getUniqueUser val = do
 
 getUniqueMember :: Key User -> Handler (Maybe (Entity Member))
 getUniqueMember val = do
-       result <- liftHandler $ runDB $ getBy $ UniqueMember val
-       return result
+             result <- liftHandler $ runDB $ getBy $ UniqueMember val
+             return result
+
+
+getUniqueMemberAndProfileMessage :: Key User -> Key Member -> Handler (Maybe (Entity Member), Maybe (Entity ProfileMessage))
+getUniqueMemberAndProfileMessage userKey memberKey= liftHandler $ runDB $ do
+             memberEntity <- getBy $ UniqueMember userKey
+             profileMessageEntity <- getBy $ UniqueProfileMessage memberKey
+             return (memberEntity, profileMessageEntity)
 
 
 getUniqueProfileMessage :: Key Member -> Handler (Maybe (Entity ProfileMessage))
@@ -363,6 +371,7 @@ setUserSessionId userEntity = do
 
 getUserKey :: Int64 -> Key User
 getUserKey userId = toSqlKey $ userId
+           
 
 
 getMemberId :: Maybe (Text) -> Handler Int64
@@ -410,26 +419,36 @@ removeMemberFromDB :: Int64 -> Key Member -> Key Member -> Handler Int64
 removeMemberFromDB rmId mKey removeMKey = 
            if rmId > 0
               then do
-                 liftHandler $ runDB $ deleteWhere [FollowingMembersMemberId ==. mKey, FollowingMembersFollowingMemberId ==. removeMKey]
+                 liftHandler $ runDB $ deleteWhere [FollowingMembersMemberId PersQ.==. mKey, FollowingMembersFollowingMemberId PersQ.==. removeMKey]
                  return $ fromSqlKey mKey
               else do
                  return $ fromSqlKey mKey
 
 
-getMembers :: Key User -> Handler [Entity Member]
-getMembers uKey= do
-         result <- liftHandler $ runDB $ selectList [MemberUserId !=. uKey] [Asc MemberId]
-         return result
-
+getMembers :: Key User -> [Entity Member] -> Key Member -> Handler [Entity Member]
+getMembers uKey flgMemberEntity mKey=
+         if Prelude.null flgMemberEntity
+           then do
+               result <- liftHandler $ runDB $ selectList [MemberUserId PersQ.!=. uKey] [Asc MemberId]
+               return result
+           else do
+               unfollowingMembers <- getUnFollowingMembers mKey uKey
+               return unfollowingMembers 
 
 getUnFollowingMembers :: Key Member -> Key User -> Handler [Entity Member]
-getUnFollowingMembers mKey uKey = liftHandler $ runDB $ rawSql s [(toPersistValue uKey), (toPersistValue mKey)]
-                          where s = "SELECT ?? \
-                                    \FROM member \
-                                    \WHERE member.user_id != ? AND member.id NOT IN \
-                                     \(SELECT following_member_id \
-                                      \FROM following_members \
-                                      \WHERE following_members.member_id = ?)"                                                      
+getUnFollowingMembers mKey uKey = do
+                        result <- runDB
+                         $ select
+                         $ from $ \member -> do                                                    
+                           where_ ((member ^. MemberUserId E.!=. val uKey) &&.
+                                     (member ^. MemberId `notIn` (subList_select 
+                                                                  $ from $ \followingMembersDB -> do
+                                                                    where_ (followingMembersDB ^. FollowingMembersMemberId E.==. val mKey) 
+                                                                    return (followingMembersDB ^. FollowingMembersFollowingMemberId))))                            
+                           return
+                            ( member 
+                            ) 
+                        return result                                                      
                         
 
 getFollowingMembers :: Key Member -> Handler [Entity Member]  
@@ -440,31 +459,29 @@ getFollowingMembers mKey = liftHandler $ runDB $ rawSql s [toPersistValue mKey]
                            \WHERE following_members.member_id = ?"
 
 
-updateMessage :: Key Member -> Textarea -> Handler Int64
-updateMessage mKey tarea = do
-              liftHandler $ runDB $ updateWhere [ProfileMessageMemberId ==. mKey] [ProfileMessageMessage =. tarea]
-              return (fromSqlKey $ mKey)
-
-
-insertMessage :: Int64 -> Key Member -> Textarea -> Handler Int64
-insertMessage umessage mKey tarea =
-              if (umessage > 0)
-                  then    do
-                       return $ fromSqlKey mKey
-                  else    do
+insertMessage :: Maybe (Entity ProfileMessage) -> Key Member -> Textarea -> Handler ()
+insertMessage profileMessageEntity mKey tarea = do
+               result <- case profileMessageEntity of
+                    Just (Entity _ _) -> liftHandler $ runDB $ updateWhere [ProfileMessageMemberId PersQ.==. mKey] [ProfileMessageMessage PersQ.=. tarea]
+                    Nothing -> do
                        insertedMessage <- runDB $ insert $ ProfileMessage mKey tarea
-                       return $ fromSqlKey insertedMessage
+                       return ()
+               return result
 
 
 messageNotUpdated :: Int64
 messageNotUpdated = 0
 
 
+memberKeyToInt :: Key Member -> Int
+memberKeyToInt mKey = fromIntegral $ fromSqlKey mKey
+
+
 removeMessageFromDB :: Int64 -> Key MemberMessage -> Handler Int64
 removeMessageFromDB rmId mmKey = 
            if rmId > 0
               then do
-                 liftHandler $ runDB $ deleteWhere [MemberMessageId ==. mmKey]
+                 liftHandler $ runDB $ deleteWhere [MemberMessageId PersQ.==. mmKey]
                  return $ fromSqlKey mmKey
               else do
                  return $ fromSqlKey mmKey
@@ -486,10 +503,22 @@ getLocalTime = do
 
 getMemberMessages :: Key Member -> Handler [Entity MemberMessage]
 getMemberMessages mKey = do      
-           result <- liftHandler $ runDB $ selectList [MemberMessageMemberId ==. mKey] [Asc MemberMessageId]
+           result <- liftHandler $ runDB $ selectList [MemberMessageMemberId PersQ.==. mKey] [Asc MemberMessageId]
            return result               
 
-         
+
+getMessageDetails :: Int64 -> Handler ((Textarea, Bool, UTCTime, Key Member, Text))
+getMessageDetails loggedInUserId= do
+    message <- runInputPost $ ireq textareaField "txtarea" --Get the message provided through the textbox
+    messageType <- runInputPost $ ireq boolField "messagetype" --Get the message type (i.e. public/private)
+    time <- liftIO getLocalTime --Get current time
+    let loggedInUserKey = getUserKey loggedInUserId          
+    let loggedInMemberKey = getMemberKey loggedInUserId --Get logged in entity member key
+    fromMemberEntity <- getUniqueMember loggedInUserKey --Get the member entity of the member who is posting the message
+    fromMemberName <- getMemberName fromMemberEntity "Does not exist" --Get the member name of the member who is posting the message
+    return (message, messageType, time, loggedInMemberKey, fromMemberName)
+
+
 -- Note: Some functionality previously present in the scaffolding has been
 -- moved to documentation in the Wiki. Following are some hopefully helpful
 -- links:
