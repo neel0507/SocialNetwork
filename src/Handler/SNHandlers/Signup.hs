@@ -8,9 +8,7 @@ getSignupR :: Handler Html
 getSignupR = do
     (widget, enctype) <- generateFormPost userForm --Generate the sign up form    
     defaultLayout $ do
-       addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js" --Jquery script
        $(widgetFile "SNTemplates/signup") --template for signing up
-       toWidget $(juliusFile "templates/SNTemplates/reglogin.julius") --associated javascript file
 
 postSignupR :: Handler Html
 postSignupR = do
@@ -27,10 +25,10 @@ postSignupR = do
                           $(widgetFile "SNTemplates/postSignup") --template to display after signup
       _ -> redirect SignupR --If unsuccessful signup 
 
-putRegisterVerifyUserR :: Handler String
-putRegisterVerifyUserR = do
-     user <- requireJsonBody :: Handler User --Get Json data
-     existingUser <- runDB $ count [UserIdent ==. (userIdent user)] --Identify if it is an existing user   
+
+getRegisterVerifyUserR :: Text -> Handler String
+getRegisterVerifyUserR uname = do
+     existingUser <- runDB $ count [UserIdent ==. uname] --Identify if it is an existing user   
      if (existingUser > 0)
         then
             return "User exists"              
@@ -38,11 +36,10 @@ putRegisterVerifyUserR = do
             return "Username available"
 
 
-putLoginVerifyUserR :: Handler String
-putLoginVerifyUserR = do
-     user <- requireJsonBody :: Handler User --Get Json data
-     existingUser <- runDB $ count [UserIdent ==. (userIdent user)] --Identify if it is an existing user
+getLoginVerifyUserR :: Text -> Handler String
+getLoginVerifyUserR uname = do
+     existingUser <- runDB $ count [UserIdent ==. uname] --Identify if it is a valid user
      if (existingUser > 0)
-        then return "Valid Username"
+        then return "Valid username"
      else
-             return "Invalid Username"
+             return "Invalid username"

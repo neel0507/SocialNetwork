@@ -122,7 +122,8 @@ instance Yesod App where
 
         let memberNameLength = Prelude.length memberName
         pc <- widgetToPageContent $ do
-           widget 
+           widget
+           addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js" 
            toWidget $(luciusFile "templates/SNTemplates/defaultLayout.lucius")
         withUrlRenderer
          [hamlet|
@@ -157,8 +158,8 @@ instance Yesod App where
     isAuthorized HomeR _ = return Authorized
     isAuthorized HomepageR _ = return Authorized
     isAuthorized SignupR _ = return Authorized
-    isAuthorized RegisterVerifyUserR _ = return Authorized
-    isAuthorized LoginVerifyUserR _ = return Authorized
+    isAuthorized (RegisterVerifyUserR _) _ = return Authorized
+    isAuthorized (LoginVerifyUserR _) _ = return Authorized
     isAuthorized FaviconR _ = return Authorized
     isAuthorized MainImageR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
@@ -249,8 +250,7 @@ instance YesodAuth App where
                     request <- getRequest
                     let mtok = reqToken request
                     result <- $(whamletFile "templates/SNTemplates/login.hamlet")
-                    addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"
-                    toWidget $(juliusFile "templates/SNTemplates/reglogin.julius")
+                    toWidget $(juliusFile "templates/SNTemplates/login.julius")
                     return result
     
     authenticate creds = liftHandler $ runDB $ do
@@ -317,15 +317,15 @@ getUniqueUser val = do
 
 getUniqueMember :: Key User -> Handler (Maybe (Entity Member))
 getUniqueMember val = do
-             result <- liftHandler $ runDB $ getBy $ UniqueMember val
-             return result
+       result <- liftHandler $ runDB $ getBy $ UniqueMember val
+       return result
 
 
 getUniqueMemberAndProfileMessage :: Key User -> Key Member -> Handler (Maybe (Entity Member), Maybe (Entity ProfileMessage))
 getUniqueMemberAndProfileMessage userKey memberKey= liftHandler $ runDB $ do
-             memberEntity <- getBy $ UniqueMember userKey
-             profileMessageEntity <- getBy $ UniqueProfileMessage memberKey
-             return (memberEntity, profileMessageEntity)
+       memberEntity <- getBy $ UniqueMember userKey
+       profileMessageEntity <- getBy $ UniqueProfileMessage memberKey
+       return (memberEntity, profileMessageEntity)
 
 
 getUniqueProfileMessage :: Key Member -> Handler (Maybe (Entity ProfileMessage))
@@ -336,37 +336,37 @@ getUniqueProfileMessage val = do
 
 createUserRecordAndReturnUserKey :: Maybe (Entity User) -> Text -> Text -> Handler (Key User)
 createUserRecordAndReturnUserKey userEntity uname pass = do
-        result <- case userEntity of
-           Nothing -> do
-             let user = User uname ""
-             userPass <- setPassword pass user
-             insertedUser <- runDB $ insertBy $ userPass
-             return $
-                case insertedUser of
-                   Left (Entity userid _) -> userid -- newly added user
-                   Right userid -> userid -- existing user
-           Just (Entity userId _) -> return userId --existing user
-        return result
+      result <- case userEntity of
+         Nothing -> do
+           let user = User uname ""
+           userPass <- setPassword pass user
+           insertedUser <- runDB $ insertBy $ userPass
+           return $
+             case insertedUser of
+               Left (Entity userid _) -> userid -- newly added user
+               Right userid -> userid -- existing user
+         Just (Entity userId _) -> return userId --existing user
+      return result
 
 
 createMemberRecordAndReturnMemberKey :: Maybe (Entity Member) ->  Key User -> Text -> Handler (Key Member)
 createMemberRecordAndReturnMemberKey entityMember userId uname = do
-        result <- case entityMember of
-            Nothing ->
-             liftHandler $ runDB $ insert $ Member
-              { memberUserId = userId
-              , memberIdent = uname
-              }
-            Just (Entity memberId _) -> return memberId
-        return result
+      result <- case entityMember of
+         Nothing ->
+           liftHandler $ runDB $ insert $ Member
+            { memberUserId = userId
+            , memberIdent = uname
+            }
+         Just (Entity memberId _) -> return memberId
+      return result
 
 
 setUserSessionId :: Maybe (Entity User) -> Handler ()
 setUserSessionId userEntity = do
-          result <- case userEntity of
-                Just(Entity userId _) -> setSession "User_Id" (pack $ show $ fromSqlKey userId)
-                Nothing -> deleteSession "User_Id"
-          return result
+      result <- case userEntity of
+          Just(Entity userId _) -> setSession "User_Id" (pack $ show $ fromSqlKey userId)
+          Nothing -> deleteSession "User_Id"
+      return result
 
 
 getUserKey :: Int64 -> Key User
@@ -376,9 +376,9 @@ getUserKey userId = toSqlKey $ userId
 
 getMemberId :: Maybe (Text) -> Handler Int64
 getMemberId uid = do
-      return $ case uid of
-          Just uid -> read (unpack uid) :: Int64
-          Nothing  -> 0 :: Int64
+     return $ case uid of
+        Just uid -> read (unpack uid) :: Int64
+        Nothing  -> 0 :: Int64
 
 
 getMemberKey :: Int64 -> Key Member
@@ -391,82 +391,86 @@ getMemberMessageKey mmKey = toSqlKey $ mmKey
 
 getMemberName :: Maybe (Entity Member) -> String -> Handler Text
 getMemberName memberEntity message = do
-        result <- case memberEntity of
-            Just (Entity mId member)-> return $ memberIdent member
-            Nothing -> return $ pack message
-        return result  
+      result <- case memberEntity of
+          Just (Entity mId member)-> return $ memberIdent member
+          Nothing -> return $ pack message
+      return result  
 
 
 getProfileMessage :: Maybe (Entity ProfileMessage) -> String -> Handler Text
 getProfileMessage profileEntity message= do
-       result <- case profileEntity of
-           Just (Entity profileid profile) -> return $ unTextarea $ profileMessageMessage profile
-           Nothing -> return $ pack message
-       return result
+      result <- case profileEntity of
+          Just (Entity profileid profile) -> return $ unTextarea $ profileMessageMessage profile
+          Nothing -> return $ pack message
+      return result
 
 
 addMemberToDB :: Int64 -> Key Member -> Key Member -> Handler Int64
 addMemberToDB amId mKey addmKey = 
-           if amId > 0
-              then do
-                 a <- liftHandler $ runDB $ insert $ FollowingMembers mKey addmKey
-                 return $ fromSqlKey a
-              else do
-                 return $ fromSqlKey mKey
+      if amId > 0
+        then do
+          a <- liftHandler $ runDB $ insert $ FollowingMembers mKey addmKey
+          return $ fromSqlKey a
+        else do
+          return $ fromSqlKey mKey
 
 
 removeMemberFromDB :: Int64 -> Key Member -> Key Member -> Handler Int64
 removeMemberFromDB rmId mKey removeMKey = 
-           if rmId > 0
-              then do
-                 liftHandler $ runDB $ deleteWhere [FollowingMembersMemberId PersQ.==. mKey, FollowingMembersFollowingMemberId PersQ.==. removeMKey]
-                 return $ fromSqlKey mKey
-              else do
-                 return $ fromSqlKey mKey
+      if rmId > 0
+        then do
+          liftHandler $ runDB $ deleteWhere [FollowingMembersMemberId PersQ.==. mKey, FollowingMembersFollowingMemberId PersQ.==. removeMKey]
+          return $ fromSqlKey mKey
+        else do
+          return $ fromSqlKey mKey
 
 
 getMembers :: Key User -> [Entity Member] -> Key Member -> Handler [Entity Member]
 getMembers uKey flgMemberEntity mKey=
-         if Prelude.null flgMemberEntity
-           then do
-               result <- liftHandler $ runDB $ selectList [MemberUserId PersQ.!=. uKey] [Asc MemberId]
-               return result
-           else do
-               unfollowingMembers <- getUnFollowingMembers mKey uKey
-               return unfollowingMembers 
+      if Prelude.null flgMemberEntity
+        then do
+           result <- liftHandler $ runDB $ selectList [MemberUserId PersQ.!=. uKey] [Asc MemberId]
+           return result
+        else do
+           unfollowingMembers <- getUnFollowingMembers mKey uKey
+           return unfollowingMembers 
 
 getUnFollowingMembers :: Key Member -> Key User -> Handler [Entity Member]
 getUnFollowingMembers mKey uKey = do
-                        result <- runDB
-                         $ select
-                         $ from $ \member -> do                                                    
-                           where_ ((member ^. MemberUserId E.!=. val uKey) &&.
-                                     (member ^. MemberId `notIn` (subList_select 
-                                                                  $ from $ \followingMembersDB -> do
-                                                                    where_ (followingMembersDB ^. FollowingMembersMemberId E.==. val mKey) 
-                                                                    return (followingMembersDB ^. FollowingMembersFollowingMemberId))))                            
-                           return
-                            ( member 
-                            ) 
-                        return result                                                      
+       result <- runDB
+          $ select
+          $ from $ \member -> do                                                    
+          E.where_ ((member ^. MemberUserId E.!=. val uKey) &&.
+                    (member ^. MemberId `notIn` 
+                       (subList_select 
+                        $ from $ \followingMembers -> do
+                        E.where_ (followingMembers ^. FollowingMembersMemberId E.==. val mKey) 
+                        return 
+                          (followingMembers ^. FollowingMembersFollowingMemberId)
+                       )
+                    )
+                   )                            
+          return 
+           (member)  
+       return result                                                      
                         
 
 getFollowingMembers :: Key Member -> Handler [Entity Member]  
 getFollowingMembers mKey = liftHandler $ runDB $ rawSql s [toPersistValue mKey]
-                 where s = "SELECT ?? \
-                           \FROM following_members INNER JOIN member \
-                           \ON following_members.following_member_id = member.id \
-                           \WHERE following_members.member_id = ?"
+        where s = "SELECT ?? \
+                   \FROM following_members INNER JOIN member \
+                   \ON following_members.following_member_id = member.id \
+                   \WHERE following_members.member_id = ?"
 
 
 insertMessage :: Maybe (Entity ProfileMessage) -> Key Member -> Textarea -> Handler ()
 insertMessage profileMessageEntity mKey tarea = do
-               result <- case profileMessageEntity of
-                    Just (Entity _ _) -> liftHandler $ runDB $ updateWhere [ProfileMessageMemberId PersQ.==. mKey] [ProfileMessageMessage PersQ.=. tarea]
-                    Nothing -> do
-                       insertedMessage <- runDB $ insert $ ProfileMessage mKey tarea
-                       return ()
-               return result
+     result <- case profileMessageEntity of
+        Just (Entity _ _) -> liftHandler $ runDB $ updateWhere [ProfileMessageMemberId PersQ.==. mKey] [ProfileMessageMessage PersQ.=. tarea]
+        Nothing -> do
+             insertedMessage <- runDB $ insert $ ProfileMessage mKey tarea
+             return ()
+     return result
 
 
 messageNotUpdated :: Int64
@@ -479,12 +483,12 @@ memberKeyToInt mKey = fromIntegral $ fromSqlKey mKey
 
 removeMessageFromDB :: Int64 -> Key MemberMessage -> Handler Int64
 removeMessageFromDB rmId mmKey = 
-           if rmId > 0
-              then do
-                 liftHandler $ runDB $ deleteWhere [MemberMessageId PersQ.==. mmKey]
-                 return $ fromSqlKey mmKey
-              else do
-                 return $ fromSqlKey mmKey
+     if rmId > 0
+        then do
+           liftHandler $ runDB $ deleteWhere [MemberMessageId PersQ.==. mmKey]
+           return $ fromSqlKey mmKey
+        else do
+           return $ fromSqlKey mmKey
 
 
 dateFormat :: UTCTime -> String
@@ -501,22 +505,27 @@ getLocalTime = do
     return (addMinutes 60 result)
 
 
-getMemberMessages :: Key Member -> Handler [Entity MemberMessage]
-getMemberMessages mKey = do      
-           result <- liftHandler $ runDB $ selectList [MemberMessageMemberId PersQ.==. mKey] [Asc MemberMessageId]
-           return result               
+getMemberMessages :: Key Member -> Handler [((Entity MemberMessage), (E.Value Text))]
+getMemberMessages mKey= do
+    result <- runDB
+      $ select
+      $ from $ \(member_message `InnerJoin` member)-> do
+      E.on (member_message ^. MemberMessageFromMemberId E.==. member ^. MemberId)                                                      
+      E.where_ (member_message ^. MemberMessageMemberId E.==. val mKey)
+      return
+       ( member_message
+       , member ^. MemberIdent
+       )
+    return result               
 
 
-getMessageDetails :: Int64 -> Handler ((Textarea, Bool, UTCTime, Key Member, Text))
+getMessageDetails :: Int64 -> Handler ((Textarea, Bool, UTCTime, Key Member))
 getMessageDetails loggedInUserId= do
     message <- runInputPost $ ireq textareaField "txtarea" --Get the message provided through the textbox
     messageType <- runInputPost $ ireq boolField "messagetype" --Get the message type (i.e. public/private)
-    time <- liftIO getLocalTime --Get current time
-    let loggedInUserKey = getUserKey loggedInUserId          
+    time <- liftIO getLocalTime --Get current time          
     let loggedInMemberKey = getMemberKey loggedInUserId --Get logged in entity member key
-    fromMemberEntity <- getUniqueMember loggedInUserKey --Get the member entity of the member who is posting the message
-    fromMemberName <- getMemberName fromMemberEntity "Does not exist" --Get the member name of the member who is posting the message
-    return (message, messageType, time, loggedInMemberKey, fromMemberName)
+    return (message, messageType, time, loggedInMemberKey)
 
 
 -- Note: Some functionality previously present in the scaffolding has been

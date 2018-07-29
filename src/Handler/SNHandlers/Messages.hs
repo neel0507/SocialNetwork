@@ -4,6 +4,7 @@ module Handler.SNHandlers.Messages where
 
 import Import
 import Database.Persist.Sql
+import Database.Esqueleto as E
 import Text.Julius  (juliusFile)
 
 getMessagesR :: Handler Html
@@ -24,10 +25,9 @@ getMessagesR = do
     existingMessage <- getUniqueProfileMessage loggedInMemberKey --Get profile message entity of the logged in member
     profileMessage <- getProfileMessage existingMessage "No message Yet" --Get profile message
                                                             
-    messages <- getMemberMessages loggedInMemberKey --Get messages of the logged in member
+    messages <- getMemberMessages loggedInMemberKey--Get messages of the logged in member
 
-    defaultLayout $ do              
-      addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js" --Jquery script            
+    defaultLayout $ do            
       $(widgetFile "SNTemplates/memberMessages") --template to display when there are messages on the logged in member's messages page
       toWidget $(juliusFile "templates/SNTemplates/messages.julius")--Associated Javascript file 
 
@@ -36,8 +36,8 @@ postMessagesR :: Handler Html
 postMessagesR = do
     (userId, user) <- requireAuthPair --Get user details from authentication     
     let loggedInUserId = fromSqlKey userId--Convert the key (userId) into an integer to identify the user
-    (msg, msgType, time, liMemberKey, fromMember) <- getMessageDetails loggedInUserId --Get message details      
-    insertMessage <- runDB $ insert $ MemberMessage liMemberKey liMemberKey fromMember msgType time msg -- insert the message in the database
+    (msg, msgType, time, liMemberKey) <- getMessageDetails loggedInUserId --Get message details      
+    insertMessage <- runDB $ insert $ MemberMessage liMemberKey liMemberKey msgType time msg -- insert the message in the database
     redirect MessagesR --redirect to where message is posted                                           
 
 
@@ -50,8 +50,7 @@ getViewMemberMessagesR viewMemberId = do
     viewMemberMessage <- getProfileMessage viewProfileMessageEntity "No message Yet" --Get the member message with the help of profile message entity
     messages <- getMemberMessages viewMemberKey --Get messages of the member being viewed                 
                  
-    defaultLayout $ do              
-      addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js" --Jquery script            
+    defaultLayout $ do           
       $(widgetFile "SNTemplates/viewMemberMessages") --template to display the page with messages of the member being viewed
       toWidget $(juliusFile "templates/SNTemplates/messages.julius") --Associated Javascript file
 
@@ -62,7 +61,7 @@ postViewMemberMessagesR viewMemberId = do
     let vmId = (fromIntegral viewMemberId) :: Int64 --Convert Int Id to Int64 Id
     let viewMemberKey = getMemberKey vmId --Get view member key      
     let loggedInUserId = fromSqlKey userId--Convert the key (userId) into an integer to identify the user
-    (msg, msgType, time, liMemberKey, fromMember) <- getMessageDetails loggedInUserId --Get message details
-    insertMessage <- runDB $ insert $ MemberMessage viewMemberKey liMemberKey fromMember msgType time msg --insert the message in the database
+    (msg, msgType, time, liMemberKey) <- getMessageDetails loggedInUserId --Get message details
+    insertMessage <- runDB $ insert $ MemberMessage viewMemberKey liMemberKey msgType time msg --insert the message in the database
     redirect $ ViewMemberMessagesR viewMemberId --redirect to where message is posted
 

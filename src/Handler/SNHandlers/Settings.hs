@@ -16,7 +16,6 @@ getSettingsR = do
     message <- getProfileMessage existingMessage "No message Yet" --Get profile message
 
     defaultLayout $ do
-       addScriptRemote "http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js" --jQuery script
        $(widgetFile "SNTemplates/settings") --template to display settings page
        toWidget $(juliusFile "templates/SNTemplates/messages.julius") --Associated javascript file
     

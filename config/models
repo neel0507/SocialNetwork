@@ -23,7 +23,6 @@ ProfileMessage
 MemberMessage
     memberId MemberId
     fromMemberId MemberId
-    fromMember Text
     isPrivateMessage Bool
     time UTCTime
     message Textarea

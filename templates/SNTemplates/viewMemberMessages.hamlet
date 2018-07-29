@@ -17,11 +17,11 @@
         Private<input type="radio" id="messagetype" name="messagetype" value="on" Checked>
         <input id="submit" type="submit" name="messagetype" value="Post Message">
    $if Prelude.null messages
-     <div class="info" id="noMessage">No messages yet
+     <div class="info" id="noMessage" >No messages yet
    $else
-     $forall (Entity memberMessageId memberMessage) <- messages
+     $forall (Entity memberMessageId memberMessage, E.Value fromMember) <- messages
        <ul>
          $if((memberMessageIsPrivateMessage memberMessage) == True)
-           <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}--<a href="/messages?view=#{fromSqlKey $ (memberMessageFromMemberId memberMessage)}">#{memberMessageFromMember memberMessage}</a> whispered--&quot;#{memberMessageMessage memberMessage}&quot;
+           <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}--<a href=@{ViewMemberMessagesR (memberKeyToInt $ memberMessageFromMemberId memberMessage)}>#{fromMember}</a> whispered--&quot;#{memberMessageMessage memberMessage}&quot;
          $else
-           <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}--<a href="/messages?view=#{fromSqlKey $ (memberMessageFromMemberId memberMessage)}">#{memberMessageFromMember memberMessage}</a> wrote--&quot;#{memberMessageMessage memberMessage}&quot;   
+           <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}--<a href=@{ViewMemberMessagesR (memberKeyToInt $ memberMessageFromMemberId memberMessage)}>#{fromMember}</a> wrote--&quot;#{memberMessageMessage memberMessage}&quot;   

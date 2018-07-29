@@ -1,27 +1,14 @@
 $(function(){  
      
-       var pageURL = $(location).attr("href").split("/");
-       if (pageURL[3] == "signup")
-       {
-       	 var url = "@{RegisterVerifyUserR}";
-         var stringToCheck = "User exists";
-       }
-       else if (pageURL[4] == "login")
-       {
-	 var url = "@{LoginVerifyUserR}";
-         var stringToCheck = "Invalid Username";
-       }
-       
-       $("#username").blur(function(){                
+       $("#username").blur(function(){
+                var stringToCheck = "Invalid username";               
 		var uname = $("#username").val();
-                
                 if(uname.length > 0)
                 {
 			$.ajax({
-				url: url,
-				type: "PUT",
-				contentType: "application/json",                   			
-				data: JSON.stringify({ident:uname, password:""}), 
+				url: "/jsonlogin/" + uname,
+                                type: "GET",
+				contentType: "application/json", 
 				success: function(result){
 				      var data = result;
                                       if(data == stringToCheck)
@@ -36,7 +23,7 @@ $(function(){
                                       }        
 				},
 				error: function(xhr, status, error) {
-				   alert(xhr.responseText);
+				   alert("fail");
 				},
 				dataType : "text"
 			});
