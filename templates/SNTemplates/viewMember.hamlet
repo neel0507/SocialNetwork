@@ -7,6 +7,9 @@
         <li><a href=@{LoginpageR LogoutR}>Log Out </a>
    <br>
    <div class="message"><p>#{viewMemberName}&#39;s Profile</p>
-   <div class="message"><p>Profile Message: #{viewMemberMessage}</p>
+   $if (viewMemberMessage == pack "")
+       <div class="message"><p>Profile Message: No message yet</p>
+   $else   
+       <div class="message"><p>Profile Message: #{viewMemberMessage}</p>
    <ul class="menu">
-      <li><a href=@{ViewMemberMessagesR viewMemberId}>View #{viewMemberName}&#39;s Messages </a>
+      <li><a href=@{ViewMemberMessagesR viewMemberName}>View #{viewMemberName}&#39;s Messages </a>

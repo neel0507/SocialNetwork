@@ -3,7 +3,7 @@
 module Handler.SNHandlers.Messages where
 
 import Import
-import Database.Persist.Sql
+import Database.Persist.Sql as PersQ
 import Database.Esqueleto as E
 import Text.Julius  (juliusFile)
 
@@ -22,10 +22,9 @@ getMessagesR = do
                  return "Message removed"--Returned, but not used
            Nothing -> 
                  return ""--Returned, but not used
-    existingMessage <- getUniqueProfileMessage loggedInMemberKey --Get profile message entity of the logged in member
-    profileMessage <- getProfileMessage existingMessage "No message Yet" --Get profile message
-                                                            
-    messages <- getMemberMessages loggedInMemberKey--Get messages of the logged in member
+    profileMessage <- getProfileMessage (userIdent user) --Get profile message
+    memberKey <- getViewMemberKey (userIdent user)                                                            
+    messages <- getMemberMessages memberKey--Get messages of the logged in member
 
     defaultLayout $ do            
       $(widgetFile "SNTemplates/memberMessages") --template to display when there are messages on the logged in member's messages page
@@ -41,27 +40,31 @@ postMessagesR = do
     redirect MessagesR --redirect to where message is posted                                           
 
 
-getViewMemberMessagesR :: Int -> Handler Html
-getViewMemberMessagesR viewMemberId = do
-    let vmId = (fromIntegral viewMemberId) :: Int64 --Convert Int Id to Int64 Id
-    let viewMemberKey = getMemberKey vmId --Get view member key
-    (viewMemberEntity, viewProfileMessageEntity) <- getUniqueMemberAndProfileMessage (getUserKey vmId) (getMemberKey vmId) -- get member entity and profile message entity to display member name and member message with the help of view member id 
-    viewMemberName <- getMemberName viewMemberEntity "Does not exist" --Get the name of view member from entity             
-    viewMemberMessage <- getProfileMessage viewProfileMessageEntity "No message Yet" --Get the member message with the help of profile message entity
-    messages <- getMemberMessages viewMemberKey --Get messages of the member being viewed                 
+getViewMemberMessagesR :: Text -> Handler Html
+getViewMemberMessagesR viewMemberName = do
+    validMember <- runDB $ PersQ.count [MemberIdent PersQ.==. viewMemberName] --Identify if it is a valid user
+    if validMember > 0
+       then do            
+           viewMemberMessage <- getProfileMessage viewMemberName --Get the member message with the help of memberName
+           viewMemberKey <- getViewMemberKey viewMemberName
+           messages <- getMemberMessages viewMemberKey --Get messages of the member being viewed                 
                  
-    defaultLayout $ do           
-      $(widgetFile "SNTemplates/viewMemberMessages") --template to display the page with messages of the member being viewed
-      toWidget $(juliusFile "templates/SNTemplates/messages.julius") --Associated Javascript file
+           defaultLayout $ do           
+              $(widgetFile "SNTemplates/viewMemberMessages") --template to display the page with messages of the member being viewed
+              toWidget $(juliusFile "templates/SNTemplates/messages.julius") --Associated Javascript file
+       else
+           defaultLayout $ do
+              [whamlet|
+                 Member does not exist
+              |]
 
 
-postViewMemberMessagesR :: Int -> Handler Html
-postViewMemberMessagesR viewMemberId = do
+postViewMemberMessagesR :: Text -> Handler Html
+postViewMemberMessagesR viewMemberName = do
     (userId, user) <- requireAuthPair --Get user details from authentication
-    let vmId = (fromIntegral viewMemberId) :: Int64 --Convert Int Id to Int64 Id
-    let viewMemberKey = getMemberKey vmId --Get view member key      
+    viewMemberKey <- getViewMemberKey viewMemberName      
     let loggedInUserId = fromSqlKey userId--Convert the key (userId) into an integer to identify the user
     (msg, msgType, time, liMemberKey) <- getMessageDetails loggedInUserId --Get message details
     insertMessage <- runDB $ insert $ MemberMessage viewMemberKey liMemberKey msgType time msg --insert the message in the database
-    redirect $ ViewMemberMessagesR viewMemberId --redirect to where message is posted
+    redirect $ ViewMemberMessagesR viewMemberName --redirect to where message is posted
 

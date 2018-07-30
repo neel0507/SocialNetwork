@@ -3,7 +3,7 @@
 module Handler.SNHandlers.Members where
 
 import Import
-import Database.Persist.Sql
+import Database.Persist.Sql as PersQ
 import Database.Esqueleto as E
 
 getMembersR :: Handler Html
@@ -36,14 +36,19 @@ getMembersR = do
       $(widgetFile "SNTemplates/members") --template to display members of the site                                                       
 
 
-getViewMemberR :: Int -> Handler Html
-getViewMemberR viewMemberId = do
-    let vmId = (fromIntegral viewMemberId) :: Int64 --Convert Int Id to Int64 Id
-    (viewMemberEntity, viewProfileMessageEntity) <- getUniqueMemberAndProfileMessage (getUserKey vmId) (getMemberKey vmId) -- get member entity and profile message entity to display member name and member message with the help of view member id           
-    viewMemberName <- getMemberName viewMemberEntity "Does not exist" -- Get the name of view member from entity              
-    viewMemberMessage <- getProfileMessage viewProfileMessageEntity "No message yet" --Get the member message with the help of profile message entity
-    defaultLayout $ do                
-       $(widgetFile "SNTemplates/viewMember") --template to display a specific member and their details
+getViewMemberR :: Text -> Handler Html
+getViewMemberR viewMemberName = do
+    validMember <- runDB $ PersQ.count [MemberIdent PersQ.==. viewMemberName] --Identify if it is a valid user
+    if validMember > 0
+       then do              
+          viewMemberMessage <- getProfileMessage viewMemberName --Get the member message with the help of member name
+          defaultLayout $ do                
+             $(widgetFile "SNTemplates/viewMember") --template to display a specific member and their details
+       else
+          defaultLayout $ do
+             [whamlet|
+                Member does not exist
+             |]
               
 
 getFriendsR :: Handler Html

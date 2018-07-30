@@ -16,10 +16,10 @@
 /home HomepageR GET
 /signup SignupR GET POST
 /members MembersR GET
-/members/view/#Int ViewMemberR GET
+/members/view/#Text ViewMemberR GET
 /friends FriendsR GET
 /messages MessagesR GET POST
-/messages/viewMember/#Int ViewMemberMessagesR GET POST
+/messages/viewMember/#Text ViewMemberMessagesR GET POST
 /settings SettingsR GET POST
 /jsonregister/#Text RegisterVerifyUserR GET
 /jsonlogin/#Text LoginVerifyUserR GET

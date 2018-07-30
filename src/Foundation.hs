@@ -158,8 +158,6 @@ instance Yesod App where
     isAuthorized HomeR _ = return Authorized
     isAuthorized HomepageR _ = return Authorized
     isAuthorized SignupR _ = return Authorized
-    isAuthorized (RegisterVerifyUserR _) _ = return Authorized
-    isAuthorized (LoginVerifyUserR _) _ = return Authorized
     isAuthorized FaviconR _ = return Authorized
     isAuthorized MainImageR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
@@ -174,6 +172,8 @@ instance Yesod App where
     isAuthorized SettingsR _ = isAuthenticated
     isAuthorized (ViewMemberR _) _ = isAuthenticated
     isAuthorized (ViewMemberMessagesR _) _ = isAuthenticated
+    isAuthorized (RegisterVerifyUserR _) _ = return Authorized
+    isAuthorized (LoginVerifyUserR _) _ = return Authorized
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
     -- expiration dates to be set far in the future without worry of
@@ -298,14 +298,14 @@ userForm = renderDivs $ User
              fsTooltip = Nothing,
              fsId = Just "username",
              fsName = Just "username",
-             fsAttrs = [("class","usernameField")]
+             fsAttrs = [("class","signupunameField")]
            }
           passwordSettings = FieldSettings
            { fsLabel = "Password",
              fsTooltip = Nothing,
              fsId = Just "password",
              fsName = Just "password",
-             fsAttrs = [("class","passwordField")]
+             fsAttrs = [("class","signupPasswordField")]
            }
 
 
@@ -397,12 +397,17 @@ getMemberName memberEntity message = do
       return result  
 
 
-getProfileMessage :: Maybe (Entity ProfileMessage) -> String -> Handler Text
-getProfileMessage profileEntity message= do
-      result <- case profileEntity of
-          Just (Entity profileid profile) -> return $ unTextarea $ profileMessageMessage profile
-          Nothing -> return $ pack message
-      return result
+getProfileMessage :: Text -> Handler Text
+getProfileMessage memberName= liftHandler $ runDB $ do
+      memberEntity <- selectFirst [MemberIdent PersQ.==. memberName] []
+      memberKey <- case memberEntity of
+                 Just (Entity memberId member) -> return memberId
+                 Nothing                       -> return $ toSqlKey (0::Int64)
+      profileMessageEntity <- selectFirst [ProfileMessageMemberId PersQ.==. memberKey] []
+      profileMessage <- case profileMessageEntity of
+                 Just (Entity _ profileMessage) -> return $ unTextarea (profileMessageMessage profileMessage)
+                 Nothing -> return $ pack ""
+      return profileMessage 
 
 
 addMemberToDB :: Int64 -> Key Member -> Key Member -> Handler Int64
@@ -477,10 +482,6 @@ messageNotUpdated :: Int64
 messageNotUpdated = 0
 
 
-memberKeyToInt :: Key Member -> Int
-memberKeyToInt mKey = fromIntegral $ fromSqlKey mKey
-
-
 removeMessageFromDB :: Int64 -> Key MemberMessage -> Handler Int64
 removeMessageFromDB rmId mmKey = 
      if rmId > 0
@@ -505,7 +506,16 @@ getLocalTime = do
     return (addMinutes 60 result)
 
 
-getMemberMessages :: Key Member -> Handler [((Entity MemberMessage), (E.Value Text))]
+getViewMemberKey :: Text -> Handler (Key Member)
+getViewMemberKey viewMemberName = do
+       memberEntity <- liftHandler $ runDB $ selectFirst [MemberIdent PersQ.==. viewMemberName] []
+       memberId <- case memberEntity of
+             Just (Entity memberId member) -> return memberId
+             Nothing -> return $ toSqlKey (0::Int64)
+       return memberId  
+
+
+getMemberMessages :: Key Member -> Handler [((Entity MemberMessage), (Entity Member))]
 getMemberMessages mKey= do
     result <- runDB
       $ select
@@ -514,7 +524,7 @@ getMemberMessages mKey= do
       E.where_ (member_message ^. MemberMessageMemberId E.==. val mKey)
       return
        ( member_message
-       , member ^. MemberIdent
+       , member
        )
     return result               
 

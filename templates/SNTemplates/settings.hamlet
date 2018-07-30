@@ -6,7 +6,10 @@
         <li><a href=@{SettingsR}>Settings </a>
         <li><a href=@{LoginpageR LogoutR}>Log Out </a>
    <br>
-   <div class="message">Your profile message: #{message}
+   $if (message == pack "")
+      <div class="message">Your profile message: No message yet
+   $else
+      <div class="message">Your profile message: #{message}
    <div class="message"><h2>Enter profile message:</h2>
    <form method="POST" action="/settings">   
       <div class="message"><textarea id="txtarea" name="txtarea" rows="4" cols="40" style="resize: none;"></textarea>

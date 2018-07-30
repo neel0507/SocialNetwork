@@ -6,8 +6,11 @@
         <li><a href=@{SettingsR}>Settings </a>
         <li><a href=@{LoginpageR LogoutR}>Log Out </a>
   
-   <div class="message"><h2>Your Messages</h2>  
-   <div class="message">Your profile message: #{profileMessage}
+   <div class="message"><h2>Your Messages</h2>
+   $if (profileMessage == pack "")
+      <div class="message">Your profile message: No message yet
+   $else  
+      <div class="message">Your profile message: #{profileMessage}
    <br>
    <div class="message">Type here to leave a message:
    <form method="POST" action="/messages">
@@ -19,9 +22,9 @@
    $if Prelude.null messages 
      <div class="info" id="noMessage" >No messages yet
    $else
-     $forall (Entity memberMessageId memberMessage, E.Value fromMember) <- messages
-       <ul>
+     $forall (Entity memberMessageId memberMessage, Entity memberId member) <- messages
+       <ul class="menu2">
          $if((memberMessageIsPrivateMessage memberMessage) == True)
-           <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}--<a href=@{ViewMemberMessagesR (memberKeyToInt $ memberMessageFromMemberId memberMessage)}>#{fromMember}</a> whispered--&quot;#{memberMessageMessage memberMessage}&quot;--<a href="/messages?erase=#{fromSqlKey $ memberMessageId}">erase</a>
+           <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}: <a href=@{ViewMemberMessagesR (memberIdent member)}>#{memberIdent member}</a> whispered: &quot;#{memberMessageMessage memberMessage}&quot; - <a href="/messages?erase=#{fromSqlKey $ memberMessageId}">erase</a>
          $else
-           <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}--<a href=@{ViewMemberMessagesR (memberKeyToInt $ memberMessageFromMemberId memberMessage)}>#{fromMember}</a> wrote--&quot;#{memberMessageMessage memberMessage}&quot;--<a href="/messages?erase=#{fromSqlKey $ memberMessageId}">erase</a>
+           <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}: <a href=@{ViewMemberMessagesR (memberIdent member)}>#{memberIdent member}</a> wrote: &quot;#{memberMessageMessage memberMessage}&quot; - <a href="/messages?erase=#{fromSqlKey $ memberMessageId}">erase</a>

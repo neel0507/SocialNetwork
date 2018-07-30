@@ -5,16 +5,12 @@ module Handler.SNHandlers.Settings where
 import Import
 import Database.Persist.Sql
 import Text.Julius             (juliusFile)
+import Database.Esqueleto as E
 
 getSettingsR :: Handler Html
 getSettingsR = do
-    (userId, user) <- requireAuthPair --Get user details after authentication      
-    let loggedInUserId = fromSqlKey userId --Get logged in user id 
-    let memberKey = getMemberKey loggedInUserId --Get logged in member key
-
-    existingMessage <- getUniqueProfileMessage memberKey --Get profile message entity
-    message <- getProfileMessage existingMessage "No message Yet" --Get profile message
-
+    (userId, user) <- requireAuthPair --Get user details after authentication
+    message <- getProfileMessage (userIdent user) --Get profile message
     defaultLayout $ do
        $(widgetFile "SNTemplates/settings") --template to display settings page
        toWidget $(juliusFile "templates/SNTemplates/messages.julius") --Associated javascript file
