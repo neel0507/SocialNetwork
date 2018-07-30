@@ -515,7 +515,7 @@ getViewMemberKey viewMemberName = do
        return memberId  
 
 
-getMemberMessages :: Key Member -> Handler [((Entity MemberMessage), (Entity Member))]
+getMemberMessages :: Key Member -> Handler [((Entity MemberMessage), (E.Value Text))]
 getMemberMessages mKey= do
     result <- runDB
       $ select
@@ -524,7 +524,7 @@ getMemberMessages mKey= do
       E.where_ (member_message ^. MemberMessageMemberId E.==. val mKey)
       return
        ( member_message
-       , member
+       , member ^. MemberIdent
        )
     return result               
 
