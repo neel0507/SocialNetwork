@@ -9,16 +9,13 @@ import Text.Julius  (juliusFile)
 
 getMessagesR :: Handler Html
 getMessagesR = do
-    (userId, user) <- requireAuthPair--Get user details from authentication      
-    let loggedInUserId = fromSqlKey userId--Convert the key (userId) into an integer to identify the user                   
-
-    let loggedInMemberKey = getMemberKey loggedInUserId --Get the entity key of the logged in member
+    (_, user) <- requireAuthPair--Get user details from authentication                   
     eraseMessage <- lookupGetParam "erase" --Is user about to erase their message?
     _ <- case eraseMessage of -- Will be executed when the logged in member decides to erase their message/s
-           Just eraseM -> do --Message to remove
+           Just _ -> do --Message to remove
                  eraseMessageId <- getMemberId eraseMessage --Get the Id of specific message to remove
                  let memberMessageKey = getMemberMessageKey eraseMessageId -- Get the key of specific message to remove
-                 messageRemoved <- removeMessageFromDB eraseMessageId memberMessageKey --Delete the message with the help of key and Id
+                 _ <- removeMessageFromDB eraseMessageId memberMessageKey --Delete the message with the help of key and Id
                  return "Message removed"--Returned, but not used
            Nothing -> 
                  return ""--Returned, but not used
@@ -34,9 +31,8 @@ getMessagesR = do
 postMessagesR :: Handler Html
 postMessagesR = do
     (userId, user) <- requireAuthPair --Get user details from authentication     
-    let loggedInUserId = fromSqlKey userId--Convert the key (userId) into an integer to identify the user
-    (msg, msgType, time, liMemberKey) <- getMessageDetails loggedInUserId --Get message details      
-    insertMessage <- runDB $ insert $ MemberMessage liMemberKey liMemberKey msgType time msg -- insert the message in the database
+    (msg, msgType, time, liMemberKey) <- getMessageDetails (fromSqlKey userId) --Get message details      
+    _ <- runDB $ insert $ MemberMessage liMemberKey liMemberKey msgType time msg -- insert the message in the database
     redirect MessagesR --redirect to where message is posted                                           
 
 
@@ -63,8 +59,7 @@ postViewMemberMessagesR :: Text -> Handler Html
 postViewMemberMessagesR viewMemberName = do
     (userId, user) <- requireAuthPair --Get user details from authentication
     viewMemberKey <- getViewMemberKey viewMemberName      
-    let loggedInUserId = fromSqlKey userId--Convert the key (userId) into an integer to identify the user
-    (msg, msgType, time, liMemberKey) <- getMessageDetails loggedInUserId --Get message details
-    insertMessage <- runDB $ insert $ MemberMessage viewMemberKey liMemberKey msgType time msg --insert the message in the database
+    (msg, msgType, time, liMemberKey) <- getMessageDetails (fromSqlKey userId) --Get message details
+    _ <- runDB $ insert $ MemberMessage viewMemberKey liMemberKey msgType time msg --insert the message in the database
     redirect $ ViewMemberMessagesR viewMemberName --redirect to where message is posted
 

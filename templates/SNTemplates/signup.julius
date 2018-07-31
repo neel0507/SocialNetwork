@@ -1,5 +1,5 @@
 $(function(){  
-     
+
        $("#username").blur(function(){
                 var stringToCheck = "User exists";               
 		var uname = $("#username").val();
@@ -7,7 +7,6 @@ $(function(){
                 {
 			$.ajax({
 				url: "/jsonregister/" + uname,
-                                type: "GET",
 				contentType: "application/json", 
 				success: function(result){
 				      var data = result;

@@ -4,12 +4,11 @@ module Handler.SNHandlers.Settings where
 
 import Import
 import Database.Persist.Sql
-import Text.Julius             (juliusFile)
-import Database.Esqueleto as E
+import Text.Julius  (juliusFile)
 
 getSettingsR :: Handler Html
 getSettingsR = do
-    (userId, user) <- requireAuthPair --Get user details after authentication
+    (_, user) <- requireAuthPair --Get user details after authentication
     message <- getProfileMessage (userIdent user) --Get profile message
     defaultLayout $ do
        $(widgetFile "SNTemplates/settings") --template to display settings page
@@ -25,6 +24,6 @@ postSettingsR = do
 
     existingMessage <- getUniqueProfileMessage memberKey --Get profile message entity
 
-    insertedMessage <- insertMessage existingMessage memberKey message --Insert the message in database
+    _ <- insertMessage existingMessage memberKey message --Insert the message in database
 
     redirect SettingsR --redirect to the settings page     

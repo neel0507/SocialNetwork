@@ -3,7 +3,6 @@
 module Handler.SNHandlers.Homepage where
 
 import Import
-import Database.Persist.Sql
 
 getHomepageR :: Handler Html
 getHomepageR = do

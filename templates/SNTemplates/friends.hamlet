@@ -12,6 +12,6 @@
            <li><a href="@{MessagesR}">View Your Messages </a>      
    $else
       <div class="message"><h2>You are Following</h2>
-      <ul class="memberlist">
-         $forall (Entity memberId member) <- followingMembers
+      <ul class="message">
+         $forall (Entity _ member) <- followingMembers
            <li> #{memberIdent member}

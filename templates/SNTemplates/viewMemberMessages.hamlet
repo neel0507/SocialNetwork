@@ -22,7 +22,7 @@
    $if Prelude.null messages
      <div class="info" id="noMessage" >No messages yet
    $else
-     $forall (Entity memberMessageId memberMessage, E.Value fromMember) <- messages
+     $forall (Entity _ memberMessage, E.Value fromMember) <- messages
        <ul class="menu2">
          $if((memberMessageIsPrivateMessage memberMessage) == True)
            <li class="listItem">#{dateFormat $ (memberMessageTime memberMessage)}: <a href=@{ViewMemberMessagesR fromMember}>#{fromMember}</a> whispered: &quot;#{memberMessageMessage memberMessage}&quot;

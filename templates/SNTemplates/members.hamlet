@@ -8,9 +8,9 @@
    <br>
    <div class="message"><h2>Other Members</h2>
       <ul>
-         $forall (Entity memberId member) <- followingMembers
+         $forall (Entity _ member) <- followingMembers
             <li><a href=@{ViewMemberR (memberIdent member)}>#{memberIdent member}</a> <a href="@{MembersR}?remove=#{fromSqlKey $ (memberUserId member)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId member)}">drop</a> <a href="@{MembersR}?add=#{fromSqlKey $ (memberUserId member)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId member)}" style="display:none">follow</a> 
-         $forall (Entity memberId member) <- members
+         $forall (Entity _ member) <- members
             <li><a href=@{ViewMemberR (memberIdent member)}>#{memberIdent member}</a> <a href="@{MembersR}?add=#{fromSqlKey $ (memberUserId member)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId member)}">follow</a><a href="@{MembersR}?remove=#{fromSqlKey $ (memberUserId member)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId member)}" style="display:none">drop</a>                                           
                                            
                                            

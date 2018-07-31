@@ -112,12 +112,12 @@ instance Yesod App where
     defaultLayout :: Widget -> Handler Html
     defaultLayout widget = do
         uid <- lookupSession "User_Id"
-        member <- case uid of
-           Just uid -> runDB $ getBy $ UniqueMember (toSqlKey ((read $ unpack uid)::Int64))
+        sitemember <- case uid of
+           Just u -> runDB $ getBy $ UniqueMember (toSqlKey ((read $ unpack u)::Int64))
            Nothing -> return Nothing
     
-        memberName <- case member of
-           Just (Entity memberId member) -> return $ unpack (memberIdent member)
+        memberName <- case sitemember of
+           Just (Entity _ dbMember) -> return $ unpack (memberIdent dbMember)
            Nothing -> return "" 
 
         let memberNameLength = Prelude.length memberName
@@ -162,7 +162,8 @@ instance Yesod App where
     isAuthorized MainImageR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
     isAuthorized (StaticR _) _ = return Authorized
-
+    isAuthorized (RegisterVerifyUserR _) _ = return Authorized
+    isAuthorized (LoginVerifyUserR _) _ = return Authorized
     -- the profile route requires that the user is authenticated, so we
     -- delegate to that function
     isAuthorized ProfileR _ = isAuthenticated
@@ -172,8 +173,6 @@ instance Yesod App where
     isAuthorized SettingsR _ = isAuthenticated
     isAuthorized (ViewMemberR _) _ = isAuthenticated
     isAuthorized (ViewMemberMessagesR _) _ = isAuthenticated
-    isAuthorized (RegisterVerifyUserR _) _ = return Authorized
-    isAuthorized (LoginVerifyUserR _) _ = return Authorized
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
     -- expiration dates to be set far in the future without worry of
@@ -310,14 +309,14 @@ userForm = renderDivs $ User
 
 
 getUniqueUser :: Text -> Handler (Maybe (Entity User))
-getUniqueUser val = do
-       result <- liftHandler $ runDB $ getBy $ UniqueUser val
+getUniqueUser uname = do
+       result <- liftHandler $ runDB $ getBy $ UniqueUser uname
        return result
 
 
 getUniqueMember :: Key User -> Handler (Maybe (Entity Member))
-getUniqueMember val = do
-       result <- liftHandler $ runDB $ getBy $ UniqueMember val
+getUniqueMember uKey = do
+       result <- liftHandler $ runDB $ getBy $ UniqueMember uKey
        return result
 
 
@@ -329,8 +328,8 @@ getUniqueMemberAndProfileMessage userKey memberKey= liftHandler $ runDB $ do
 
 
 getUniqueProfileMessage :: Key Member -> Handler (Maybe (Entity ProfileMessage))
-getUniqueProfileMessage val = do
-       result <- liftHandler $ runDB $ getBy $ UniqueProfileMessage val
+getUniqueProfileMessage mKey = do
+       result <- liftHandler $ runDB $ getBy $ UniqueProfileMessage mKey
        return result
 
 
@@ -377,7 +376,7 @@ getUserKey userId = toSqlKey $ userId
 getMemberId :: Maybe (Text) -> Handler Int64
 getMemberId uid = do
      return $ case uid of
-        Just uid -> read (unpack uid) :: Int64
+        Just u -> read (unpack u) :: Int64
         Nothing  -> 0 :: Int64
 
 
@@ -392,7 +391,7 @@ getMemberMessageKey mmKey = toSqlKey $ mmKey
 getMemberName :: Maybe (Entity Member) -> String -> Handler Text
 getMemberName memberEntity message = do
       result <- case memberEntity of
-          Just (Entity mId member)-> return $ memberIdent member
+          Just (Entity _ dbMember)-> return $ memberIdent dbMember
           Nothing -> return $ pack message
       return result  
 
@@ -401,8 +400,8 @@ getProfileMessage :: Text -> Handler Text
 getProfileMessage memberName= liftHandler $ runDB $ do
       memberEntity <- selectFirst [MemberIdent PersQ.==. memberName] []
       memberKey <- case memberEntity of
-                 Just (Entity memberId member) -> return memberId
-                 Nothing                       -> return $ toSqlKey (0::Int64)
+                 Just (Entity memberId _) -> return memberId
+                 Nothing                  -> return $ toSqlKey (0::Int64)
       profileMessageEntity <- selectFirst [ProfileMessageMemberId PersQ.==. memberKey] []
       profileMessage <- case profileMessageEntity of
                  Just (Entity _ profileMessage) -> return $ unTextarea (profileMessageMessage profileMessage)
@@ -444,9 +443,9 @@ getUnFollowingMembers :: Key Member -> Key User -> Handler [Entity Member]
 getUnFollowingMembers mKey uKey = do
        result <- runDB
           $ select
-          $ from $ \member -> do                                                    
-          E.where_ ((member ^. MemberUserId E.!=. val uKey) &&.
-                    (member ^. MemberId `notIn` 
+          $ from $ \dbMember -> do                                                    
+          E.where_ ((dbMember ^. MemberUserId E.!=. val uKey) &&.
+                    (dbMember ^. MemberId `notIn` 
                        (subList_select 
                         $ from $ \followingMembers -> do
                         E.where_ (followingMembers ^. FollowingMembersMemberId E.==. val mKey) 
@@ -456,7 +455,7 @@ getUnFollowingMembers mKey uKey = do
                     )
                    )                            
           return 
-           (member)  
+           (dbMember)  
        return result                                                      
                         
 
@@ -473,7 +472,7 @@ insertMessage profileMessageEntity mKey tarea = do
      result <- case profileMessageEntity of
         Just (Entity _ _) -> liftHandler $ runDB $ updateWhere [ProfileMessageMemberId PersQ.==. mKey] [ProfileMessageMessage PersQ.=. tarea]
         Nothing -> do
-             insertedMessage <- runDB $ insert $ ProfileMessage mKey tarea
+             _ <- runDB $ insert $ ProfileMessage mKey tarea
              return ()
      return result
 
@@ -510,7 +509,7 @@ getViewMemberKey :: Text -> Handler (Key Member)
 getViewMemberKey viewMemberName = do
        memberEntity <- liftHandler $ runDB $ selectFirst [MemberIdent PersQ.==. viewMemberName] []
        memberId <- case memberEntity of
-             Just (Entity memberId member) -> return memberId
+             Just (Entity memberId _) -> return memberId
              Nothing -> return $ toSqlKey (0::Int64)
        return memberId  
 
@@ -519,12 +518,12 @@ getMemberMessages :: Key Member -> Handler [((Entity MemberMessage), (E.Value Te
 getMemberMessages mKey= do
     result <- runDB
       $ select
-      $ from $ \(member_message `InnerJoin` member)-> do
-      E.on (member_message ^. MemberMessageFromMemberId E.==. member ^. MemberId)                                                      
+      $ from $ \(member_message `InnerJoin` dbMember)-> do
+      E.on (member_message ^. MemberMessageFromMemberId E.==. dbMember ^. MemberId)                                                      
       E.where_ (member_message ^. MemberMessageMemberId E.==. val mKey)
       return
        ( member_message
-       , member ^. MemberIdent
+       , dbMember ^. MemberIdent
        )
     return result               
 

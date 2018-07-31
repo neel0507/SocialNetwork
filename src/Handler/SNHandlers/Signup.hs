@@ -1,7 +1,6 @@
 {-# LANGUAGE QuasiQuotes, TemplateHaskell, OverloadedStrings, TypeFamilies, MultiParamTypeClasses #-}
 
 module Handler.SNHandlers.Signup where
-import Text.Julius          (juliusFile)
 import Import
 
 getSignupR :: Handler Html
@@ -12,7 +11,7 @@ getSignupR = do
 
 postSignupR :: Handler Html
 postSignupR = do
-    ((result, widget), enctype) <- runFormPost userForm --Get user registration details 
+    ((result, _), _) <- runFormPost userForm --Get user registration details 
     case result of 
       FormSuccess user -> do
                         existingUser <- getUniqueUser (userIdent user) --Identify if it an existing user
@@ -27,7 +26,7 @@ postSignupR = do
 
 
 getRegisterVerifyUserR :: Text -> Handler String
-getRegisterVerifyUserR uname = do
+getRegisterVerifyUserR uname= do
      existingUser <- runDB $ count [UserIdent ==. uname] --Identify if it is an existing user   
      if (existingUser > 0)
         then
