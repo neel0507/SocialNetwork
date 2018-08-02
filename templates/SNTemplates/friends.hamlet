@@ -6,12 +6,29 @@
         <li><a href=@{SettingsR}>Settings </a>
         <li><a href=@{LoginpageR LogoutR}>Log Out </a>
    <br>
+
+   $if Prelude.null mutualMembers
+      <div class="message"><h2>No mutual friends</h2>
+   $else
+      <div class="message"><h2>Mutual Friends</h2>
+      <ul class="message">
+       $forall (Entity _ mutualMember) <- mutualMembers
+         <li> #{memberIdent mutualMember}
+   
    $if Prelude.null followingMembers
-      <div class="message"><h2>No friends yet</h2>
+      <div class="message"><h2>You are not following anyone yet, they might be your mutual friend</h2>
       <ul class="menu">
-           <li><a href="@{MessagesR}">View Your Messages </a>      
+         <li><a href="@{MessagesR}">View Your Messages </a>      
    $else
       <div class="message"><h2>You are Following</h2>
       <ul class="message">
-         $forall (Entity _ member) <- followingMembers
-           <li> #{memberIdent member}
+       $forall (Entity _ followingMember) <- followingMembers
+         <li> #{memberIdent followingMember}
+
+   $if Prelude.null followers
+     <div class="message"><h2>You are not followed by anyone yet, they might be your mutual friend</h2>
+   $else
+     <div class="message"><h2>Your Followers</h2>
+     <ul class="message">
+       $forall (Entity _ follower) <- followers
+         <li> #{memberIdent follower}

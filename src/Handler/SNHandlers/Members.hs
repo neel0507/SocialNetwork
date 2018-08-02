@@ -28,9 +28,10 @@ getMembersR = do
             Nothing -> return "" --if for some reason, member cannot be removed
 
     let userKey = getUserKey loggedInUserId --Get entity user key of the logged in user
-    followingMembers <- getFollowingMembers memberKey -- Get the following members of the user
-    members <- getMembers userKey followingMembers memberKey--Get members of the site if the user is not following any members                   
-          
+    mutualMembers <- getMutualMembers memberKey
+    followingMembers <- getFollowingMembers memberKey-- Get the following members of the user
+    followers <- getFollowers memberKey                  
+    members <- getMembers userKey mutualMembers followingMembers followers memberKey      
     defaultLayout $ do                
       $(widgetFile "SNTemplates/members") --template to display members of the site                                                       
 
@@ -54,8 +55,10 @@ getFriendsR :: Handler Html
 getFriendsR = do
     (userId, _) <- requireAuthPair --Get user details from authentication
     let loggedInUserId = fromSqlKey userId --Get logged in user id   
-    let memberKey = getMemberKey loggedInUserId --Get logged in entity member key                   
-    followingMembers <- getFollowingMembers memberKey --Get following members of the user            
+    let memberKey = getMemberKey loggedInUserId --Get logged in entity member key
+    mutualMembers <- getMutualMembers memberKey                   
+    followingMembers <- getFollowingMembers memberKey-- Get the following members of the user            
+    followers <- getFollowers memberKey
 
     defaultLayout $ do
        $(widgetFile "SNTemplates/friends") --template to display friends of the logged in user/member

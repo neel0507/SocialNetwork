@@ -107,7 +107,7 @@ instance Yesod App where
     -- To add it, chain it together with the defaultMiddleware: yesodMiddleware = defaultYesodMiddleware . defaultCsrfMiddleware
     -- For details, see the CSRF documentation in the Yesod.Core.Handler module of the yesod-core package.
     yesodMiddleware :: ToTypedContent res => Handler res -> Handler res
-    yesodMiddleware = defaultYesodMiddleware
+    yesodMiddleware = defaultYesodMiddleware Prelude.. defaultCsrfMiddleware
 
     defaultLayout :: Widget -> Handler Html
     defaultLayout widget = do
@@ -429,9 +429,9 @@ removeMemberFromDB rmId mKey removeMKey =
           return $ fromSqlKey mKey
 
 
-getMembers :: Key User -> [Entity Member] -> Key Member -> Handler [Entity Member]
-getMembers uKey flgMemberEntity mKey=
-      if Prelude.null flgMemberEntity
+getMembers :: Key User -> [Entity Member] -> [Entity Member] -> [Entity Member]-> Key Member -> Handler [Entity Member]
+getMembers uKey mutualMemberEntity flgMemberEntity flwMemberEntity mKey=
+      if Prelude.null mutualMemberEntity && Prelude.null flgMemberEntity && Prelude.null flwMemberEntity 
         then do
            result <- liftHandler $ runDB $ selectList [MemberUserId PersQ.!=. uKey] [Asc MemberId]
            return result
@@ -452,6 +452,14 @@ getUnFollowingMembers mKey uKey = do
                         return 
                           (followingMembers ^. FollowingMembersFollowingMemberId)
                        )
+                    ) &&.
+                    (dbMember ^. MemberId `notIn` 
+                       (subList_select 
+                        $ from $ \followingMembers2 -> do
+                        E.where_ (followingMembers2 ^. FollowingMembersFollowingMemberId E.==. val mKey) 
+                        return 
+                          (followingMembers2 ^. FollowingMembersMemberId)
+                       )
                     )
                    )                            
           return 
@@ -459,12 +467,85 @@ getUnFollowingMembers mKey uKey = do
        return result                                                      
                         
 
-getFollowingMembers :: Key Member -> Handler [Entity Member]  
-getFollowingMembers mKey = liftHandler $ runDB $ rawSql s [toPersistValue mKey]
-        where s = "SELECT ?? \
-                   \FROM following_members INNER JOIN member \
-                   \ON following_members.following_member_id = member.id \
-                   \WHERE following_members.member_id = ?"
+getFollowingMembers :: Key Member -> Handler [Entity Member]
+getFollowingMembers mKey = do
+       result <- runDB
+           $ select
+           $ from $ \(followingMembers `InnerJoin` dbMember) -> do
+           E.on (followingMembers ^. FollowingMembersFollowingMemberId E.==. dbMember ^. MemberId)
+           E.where_ (followingMembers ^. FollowingMembersMemberId E.==. val mKey &&.
+                     followingMembers ^. FollowingMembersFollowingMemberId `notIn`
+                      (subList_select 
+                       $ from $ \followingMembers2 -> do
+                        E.where_ (followingMembers2 ^. FollowingMembersMemberId E.==. val mKey
+                                  &&. followingMembers2 ^. FollowingMembersFollowingMemberId `in_`
+                                   (subList_select
+                                    $ from $ \followingMembers3 -> do
+                                    E.where_ (followingMembers3 ^. FollowingMembersMemberId E.!=. val mKey &&.
+                                              followingMembers3 ^. FollowingMembersFollowingMemberId E.==. val mKey) 
+                                    return 
+                                     (followingMembers3 ^. FollowingMembersMemberId)
+                                   )
+                                 ) 
+                        return 
+                          (followingMembers2 ^. FollowingMembersFollowingMemberId)
+                      )
+                    )
+           return
+            (dbMember)
+       return result
+
+
+getFollowers :: Key Member -> Handler [Entity Member]
+getFollowers mKey = do
+       result <- runDB
+           $ select
+           $ from $ \(followingMembers `InnerJoin` dbMember) -> do
+           E.on (followingMembers ^. FollowingMembersMemberId E.==. dbMember ^. MemberId)
+           E.where_ (followingMembers ^. FollowingMembersFollowingMemberId E.==. val mKey &&.
+                     followingMembers ^. FollowingMembersMemberId `notIn`
+                      (subList_select 
+                       $ from $ \followingMembers2 -> do
+                        E.where_ (followingMembers2 ^. FollowingMembersMemberId E.==. val mKey
+                                  &&. followingMembers2 ^. FollowingMembersFollowingMemberId `in_`
+                                   (subList_select
+                                    $ from $ \followingMembers3 -> do
+                                    E.where_ (followingMembers3 ^. FollowingMembersMemberId E.!=. val mKey &&.
+                                              followingMembers3 ^. FollowingMembersFollowingMemberId E.==. val mKey) 
+                                    return 
+                                     (followingMembers3 ^. FollowingMembersMemberId)
+                                   )
+                                 ) 
+                        return 
+                          (followingMembers2 ^. FollowingMembersFollowingMemberId)
+                      )
+                    )
+           return
+            (dbMember)
+       return result  
+
+
+getMutualMembers :: Key Member -> Handler [Entity Member]  
+getMutualMembers mKey = do
+       result <- runDB
+           $ select
+           $ from $ \(followingMembers `InnerJoin` dbMember) -> do
+             E.on (followingMembers ^. FollowingMembersFollowingMemberId E.==. dbMember ^. MemberId)
+             E.where_ (followingMembers ^. FollowingMembersMemberId E.==. val mKey &&. 
+                       followingMembers ^. FollowingMembersFollowingMemberId  `in_` 
+                       (subList_select 
+                        $ from $ \followingMembers2 -> do
+                        E.where_ (followingMembers2 ^. FollowingMembersMemberId E.!=. val mKey &&.
+                                  followingMembers2 ^. FollowingMembersFollowingMemberId E.==. val mKey) 
+                        return 
+                          (followingMembers2 ^. FollowingMembersMemberId)
+                       )
+                      )
+             return
+              (
+               dbMember
+              )
+       return result
 
 
 insertMessage :: Maybe (Entity ProfileMessage) -> Key Member -> Textarea -> Handler ()

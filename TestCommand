@@ -1,0 +1,2 @@
+ stack test --flag SocialNetwork:library-only --flag SocialNetwork:dev --test-arguments "-m Homepage"
+

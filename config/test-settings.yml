@@ -8,4 +8,4 @@ database:
   #   database: "_env:SQLITE_DATABASE:SocialNetwork_test.sqlite3"
   database: SocialNetwork_test.sqlite3
 
-auth-dummy-login: true
+auth-dummy-login: false

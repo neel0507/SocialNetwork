@@ -8,9 +8,14 @@
    <br>
    <div class="message"><h2>Other Members</h2>
       <ul>
-         $forall (Entity _ member) <- followingMembers
-            <li><a href=@{ViewMemberR (memberIdent member)}>#{memberIdent member}</a> <a href="@{MembersR}?remove=#{fromSqlKey $ (memberUserId member)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId member)}">drop</a> <a href="@{MembersR}?add=#{fromSqlKey $ (memberUserId member)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId member)}" style="display:none">follow</a> 
-         $forall (Entity _ member) <- members
-            <li><a href=@{ViewMemberR (memberIdent member)}>#{memberIdent member}</a> <a href="@{MembersR}?add=#{fromSqlKey $ (memberUserId member)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId member)}">follow</a><a href="@{MembersR}?remove=#{fromSqlKey $ (memberUserId member)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId member)}" style="display:none">drop</a>                                           
-                                           
-                                           
+        $forall (Entity _ mutualMember) <- mutualMembers
+           <li><a href=@{ViewMemberR (memberIdent mutualMember)}>#{memberIdent mutualMember}</a> &harr; is a mutual friend <a href="@{MembersR}?remove=#{fromSqlKey $ (memberUserId mutualMember)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId mutualMember)}">drop</a> <a href="@{MembersR}?add=#{fromSqlKey $ (memberUserId mutualMember)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId mutualMember)}" style="display:none">follow</a>
+
+        $forall (Entity _ followingMember) <- followingMembers
+           <li><a href=@{ViewMemberR (memberIdent followingMember)}>#{memberIdent followingMember}</a> &larr; you are following <a href="@{MembersR}?remove=#{fromSqlKey $ (memberUserId followingMember)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId followingMember)}">drop</a> <a href="@{MembersR}?add=#{fromSqlKey $ (memberUserId followingMember)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId followingMember)}" style="display:none">follow</a>
+
+        $forall (Entity _ follower) <- followers                   
+           <li><a href=@{ViewMemberR (memberIdent follower)}>#{memberIdent follower}</a> &rarr; is following you <a href="@{MembersR}?remove=#{fromSqlKey $ (memberUserId follower)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId follower)}" style="display:none">drop</a> <a href="@{MembersR}?add=#{fromSqlKey $ (memberUserId follower)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId follower)}">follow</a>
+
+        $forall (Entity _ member) <- members
+           <li><a href=@{ViewMemberR (memberIdent member)}>#{memberIdent member}</a> <a href="@{MembersR}?add=#{fromSqlKey $ (memberUserId member)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId member)}">follow</a><a href="@{MembersR}?remove=#{fromSqlKey $ (memberUserId member)}" class="membersListItem" id="#{fromSqlKey $ (memberUserId member)}" style="display:none">drop</a>
