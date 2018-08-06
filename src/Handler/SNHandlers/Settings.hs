@@ -8,16 +8,29 @@ import Text.Julius  (juliusFile)
 
 getSettingsR :: Handler Html
 getSettingsR = do
-    (_, user) <- requireAuthPair --Get user details after authentication
-    message <- getProfileMessage (userIdent user) --Get profile message
+ uid <- lookupSession "User_Id"     
+ userId <- getMemberId uid
+ if userId > 0
+  then do
+   -- (_, user) <- requireAuthPair --Get user details after authentication
+    let loggedInUserKey = getUserKey userId
+    uniqueMember <- getUniqueMember loggedInUserKey
+    memberName <- getMemberName uniqueMember "Does not exist"
+    message <- getProfileMessage memberName --Get profile message
     defaultLayout $ do
        $(widgetFile "SNTemplates/settings") --template to display settings page
        toWidget $(juliusFile "templates/SNTemplates/messages.julius") --Associated javascript file
+  else
+    redirect LoginpageR
     
 postSettingsR :: Handler Html
 postSettingsR = do
-    (userId, user) <- requireAuthPair --Get user details from authentication      
-    let loggedInUserId = fromSqlKey userId --Get logged in user id
+ uid <- lookupSession "User_Id"     
+ loggedInUserId <- getMemberId uid
+ if loggedInUserId > 0
+  then do
+  --  (userId, user) <- requireAuthPair --Get user details from authentication      
+   -- let loggedInUserId = fromSqlKey userId --Get logged in user id
     let memberKey = getMemberKey loggedInUserId --Get entity member key
 
     message <- runInputPost $ ireq textareaField "txtarea" --Get user message
@@ -26,4 +39,6 @@ postSettingsR = do
 
     _ <- insertMessage existingMessage memberKey message --Insert the message in database
 
-    redirect SettingsR --redirect to the settings page     
+    redirect SettingsR --redirect to the settings page
+  else
+    redirect LoginpageR     

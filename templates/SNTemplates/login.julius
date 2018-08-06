@@ -1,39 +1,32 @@
 $(function(){  
-     
+       var sameUserCall = "";
        $("#username").blur(function(){
-                var stringToCheck = "Invalid username";               
+                var stringToCheck = "an invalid username";               
 		var uname = $("#username").val();
-                if(uname.length > 0)
+                if(uname.length > 0 && uname != sameUserCall)
                 {
-			$.ajax({
-				url: "/jsonlogin/" + uname,
-                                type: "GET",
-				contentType: "application/json", 
-				success: function(result){
-				      var data = result;
-                                      if(data == stringToCheck)
-                                      {
-                                        $("#vu").hide();
- 					$("#ivu").show();                                        
-                                      }
-                                      else
-                                      {
-                                        $("#ivu").hide();
-					$("#vu").show();
-                                      }        
-				},
-				error: function(xhr, status, error) {
-				   alert("fail");
-				},
-				dataType : "text"
-			});
-                }
-                else
-                {
-		    $("#ivu").hide();
-		    $("#vu").hide();	
-                }
-
+                   sameUserCall = uname;
+		   $.ajax({
+			url: "/jsonlogin/" + uname,
+			contentType: "application/json", 
+			success: function(result){
+                           if(result == stringToCheck)				      
+                           {
+                              $("#checkUser").remove();                                     
+			      $("#verifyUser").append('<span id="checkUser" class="inValidUser">'+ result +'</span>');
+                           }
+                           else
+                           {
+                              $("#checkUser").remove();         
+			      $("#verifyUser").append('<span id="checkUser" class="validUser">'+ result +'</span>');
+                           }                                                   
+			},
+			error: function(xhr, status, error) {
+			   alert("fail");
+			},
+			dataType : "text"
+		   });
+                }                
        });    
 });
 

@@ -77,27 +77,87 @@ getTables = do
     tables <- rawSql "SELECT name FROM sqlite_master WHERE type = 'table';" []
     return (fmap unSingle tables)
 
--- | Authenticate as a user. This relies on the `auth-dummy-login: true` flag
--- being set in test-settings.yaml, which enables dummy authentication in
--- Foundation.hs
-authenticateAs :: Entity User -> YesodExample App ()
-authenticateAs (Entity _ u) = do
-    request $ do
-        setMethod "POST"
-        addPostParam "ident" $ userIdent u
-        setUrl $ LoginpageR LoginR
-
--- | Create a user.  The dummy email entry helps to confirm that foreign-key
--- checking is switched off in wipeDB for those database backends which need it.
-createUser :: Text -> YesodExample App (Entity User)
-createUser ident = runDB $ do
+createUser :: Text -> Text -> YesodExample App ()
+createUser username password= runDB $ do
     user <- insertEntity User
-        { userIdent = ident
-        , userPassword = ""
+        { userIdent = username
+        , userPassword = password
         }
-    _ <- insert Email
-        { emailEmail = ident
-        , emailUserId = Just $ entityKey user
-        , emailVerkey = Nothing
-        }
-    return user
+    return ()
+
+
+doSignup :: Text -> Text -> YesodExample App ((Text), (Text))
+doSignup username password = do
+    get SignupR
+    statusIs 200
+    request $ do
+      setMethod "POST"
+      setUrl SignupR
+      addPostParam "submit" ""
+      addPostParam "password" password
+      addPostParam "username" username
+      addToken
+    return (username, password)
+    
+
+doLogin :: Text -> Text -> YesodExample App ()
+doLogin username password = do   
+   get LoginpageR
+   statusIs 200
+   request $ do
+    setMethod "POST"
+    setUrl LoginpageR
+    addPostParam "submit" ""
+    addPostParam "password" password
+    addPostParam "username" username
+    addToken
+   return ()
+
+postProfileMessage :: Text -> YesodExample App ()
+postProfileMessage message = do
+    request $ do
+      setMethod "POST"
+      setUrl SettingsR
+      addPostParam "txtarea" message
+      addPostParam "submit" ""
+    return ()
+
+postPrivateMessage :: Text -> YesodExample App ()
+postPrivateMessage message = do
+    request $ do
+      setMethod "POST"
+      setUrl MessagesR
+      addPostParam "txtarea" message
+      addPostParam "messagetype" "on"
+      addPostParam "submit" ""
+    return ()
+
+postPublicMessage :: Text -> YesodExample App ()
+postPublicMessage message = do
+    request $ do
+      setMethod "POST"
+      setUrl MessagesR
+      addPostParam "txtarea" message
+      addPostParam "messagetype" "no"
+      addPostParam "submit" ""
+    return ()
+
+postPrivateMessageToMember :: Text -> Text -> YesodExample App ()
+postPrivateMessageToMember message member = do
+    request $ do
+      setMethod "POST"
+      setUrl (ViewMemberMessagesR member)
+      addPostParam "txtarea" message
+      addPostParam "messagetype" "on"
+      addPostParam "submit" ""
+    return ()
+
+postPublicMessageToMember :: Text -> Text -> YesodExample App ()
+postPublicMessageToMember message member = do
+    request $ do
+      setMethod "POST"
+      setUrl (ViewMemberMessagesR member)
+      addPostParam "txtarea" message
+      addPostParam "messagetype" "no"
+      addPostParam "submit" ""
+    return ()

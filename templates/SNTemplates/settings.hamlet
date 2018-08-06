@@ -4,7 +4,7 @@
         <li><a href=@{FriendsR}>Friends </a>
         <li><a href=@{MessagesR}>Messages </a>
         <li><a href=@{SettingsR}>Settings </a>
-        <li><a href=@{LoginpageR LogoutR}>Log Out </a>
+        <li><a href=@{LogoutpageR}>Log Out </a>
    <br>
    $if (message == pack "")
       <div class="message">Your profile message: No message yet
@@ -13,4 +13,4 @@
    <div class="message"><h2>Enter profile message:</h2>
    <form method="POST" action="/settings">   
       <div class="message"><textarea id="txtarea" name="txtarea" rows="4" cols="40" style="resize: none;"></textarea>
-      <div class="message"><input id="submit" type="submit" name="submit" value="Save Profile">
+      <div class="message"><button name="submit" id="submit">Save Profile

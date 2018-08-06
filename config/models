@@ -13,7 +13,8 @@ Member
     deriving Eq Ord Show
 FollowingMembers
     memberId MemberId 
-    followingMemberId MemberId 
+    followingMemberId MemberId
+    UniqueFollowingMembers memberId followingMemberId 
     deriving Eq Ord Show
 ProfileMessage
     memberId MemberId
@@ -26,6 +27,7 @@ MemberMessage
     isPrivateMessage Bool
     time UTCTime
     message Textarea
+    UniqueMemberMessage memberId fromMemberId isPrivateMessage time message
     deriving Eq Ord Show Typeable
 Email
     email Text

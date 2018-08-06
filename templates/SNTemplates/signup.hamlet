@@ -1,12 +1,12 @@
    <ul class="menu">
       <li><a href=@{HomepageR}>Home </a>
       <li><a href=@{SignupR}>Sign Up </a>
-      <li><a href=@{LoginpageR LoginR}>Log In </a>
+      <li><a href=@{LoginpageR}>Log In </a>
    <br>
    <span class="info">&#8658; You must be logged in to view this page.
    <br>   
    <div class="message"><b>Please enter your details to sign up</b>
-   <div class="message">Your preferred username: <span id="vu" class="validUser">is available</span><span id="ivu" class="inValidUser">exists</span>
-   <form method=post action=@{SignupR} enctype=#{enctype}>
+   <div class="message" id="verifyUser">Your preferred username: <span id="checkUser"></span>
+   <form method=post action=@{SignupR} enctype=#{enctype} id="signupForm">
      <div class="userInput">^{widget}                
      <button name="submit" class="submit">Submit

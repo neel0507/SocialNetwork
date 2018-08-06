@@ -8,7 +8,8 @@
 {-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE InstanceSigs #-}
-
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE GADTs #-}
 
 module Foundation where
 
@@ -76,9 +77,17 @@ type DB a = forall (m :: * -> *).
 -- Useful when writing code that is re-usable outside of the Handler context.
 -- An example is background jobs that send email.
 -- This can also be useful for writing code that works across multiple Yesod applications.
-instance HasHttpManager App where
-    getHttpManager :: App -> Manager
-    getHttpManager = appHttpManager
+
+#if !MIN_VERSION_yesod_core(1,6,0)
+#define liftHandler lift
+#define doRunDB runDB
+getAppHttpManager :: App -> Manager
+getAppHttpManager = appHttpManager
+#else
+#define doRunDB liftHandler $ runDB
+getAppHttpManager :: (MonadHandler m, HandlerSite m ~ App) => m Manager
+getAppHttpManager = appHttpManager <$> getYesod
+#endif
 
 
 -- Please see the documentation for the Yesod typeclass. There are a number
@@ -107,7 +116,7 @@ instance Yesod App where
     -- To add it, chain it together with the defaultMiddleware: yesodMiddleware = defaultYesodMiddleware . defaultCsrfMiddleware
     -- For details, see the CSRF documentation in the Yesod.Core.Handler module of the yesod-core package.
     yesodMiddleware :: ToTypedContent res => Handler res -> Handler res
-    yesodMiddleware = defaultYesodMiddleware Prelude.. defaultCsrfMiddleware
+    yesodMiddleware = defaultYesodMiddleware
 
     defaultLayout :: Widget -> Handler Html
     defaultLayout widget = do
@@ -146,18 +155,20 @@ instance Yesod App where
     authRoute
         :: App
         -> Maybe (Route App)
-    authRoute _ = Just $ LoginpageR LoginR
+    authRoute _ = Just $ AuthR LoginR
 
     isAuthorized
         :: Route App  -- ^ The route the user is visiting.
         -> Bool       -- ^ Whether or not this is a "write" request.
         -> Handler AuthResult
     -- Routes not requiring authentication.
-    isAuthorized (LoginpageR _) _ = return Authorized
+    isAuthorized (AuthR _) _ = return Authorized
     isAuthorized CommentR _ = return Authorized
     isAuthorized HomeR _ = return Authorized
     isAuthorized HomepageR _ = return Authorized
     isAuthorized SignupR _ = return Authorized
+    isAuthorized LoginpageR _ = return Authorized
+    isAuthorized LogoutpageR _ = return Authorized
     isAuthorized FaviconR _ = return Authorized
     isAuthorized MainImageR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
@@ -166,13 +177,13 @@ instance Yesod App where
     isAuthorized (LoginVerifyUserR _) _ = return Authorized
     -- the profile route requires that the user is authenticated, so we
     -- delegate to that function
-    isAuthorized ProfileR _ = isAuthenticated
-    isAuthorized MembersR _ = isAuthenticated
-    isAuthorized FriendsR _ = isAuthenticated
-    isAuthorized MessagesR _ = isAuthenticated
-    isAuthorized SettingsR _ = isAuthenticated
-    isAuthorized (ViewMemberR _) _ = isAuthenticated
-    isAuthorized (ViewMemberMessagesR _) _ = isAuthenticated
+    isAuthorized ProfileR _ = return Authorized
+    isAuthorized MembersR _ = return Authorized
+    isAuthorized FriendsR _ = return Authorized
+    isAuthorized MessagesR _ = return Authorized
+    isAuthorized SettingsR _ = return Authorized
+    isAuthorized (ViewMemberR _) _ = return Authorized
+    isAuthorized (ViewMemberMessagesR _) _ = return Authorized
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
     -- expiration dates to be set far in the future without worry of
@@ -237,42 +248,45 @@ instance YesodAuth App where
          deleteSession "User_Id"
     -- Override the above two destinations when a Referer: header is present
     redirectToReferer :: App -> Bool
-    redirectToReferer _ = False
+    redirectToReferer _ = True
+
+ --   authenticate creds = liftHandler $ runDB $ do
+  --      x <- getBy $ UniqueUser $ credsIdent creds
+   --     _ <- case x of
+     --       Nothing -> pure ()
+      --      Just (Entity uid _) -> liftHandler $ setUserSessionId uid
+    --    return $ case x of
+       --     Nothing -> UserError InvalidLogin
+        --    Just (Entity uid _) -> Authenticated uid
 
     -- You can add other plugins like BrowserID, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
-    authPlugins _ = [authHashDBWithForm loginPageForm (Just Prelude.. UniqueUser)]
-       where
-            loginPageForm :: Route App -> Widget
-            loginPageForm action = do
-                    mmsg <- getMessage
-                    request <- getRequest
-                    let mtok = reqToken request
-                    result <- $(whamletFile "templates/SNTemplates/login.hamlet")
-                    toWidget $(juliusFile "templates/SNTemplates/login.julius")
-                    return result
-    
-    authenticate creds = liftHandler $ runDB $ do
-        x <- getBy $ UniqueUser $ credsIdent creds
-        _ <- liftHandler $ setUserSessionId x
-        return $ case x of
-            Nothing -> UserError InvalidLogin
-            Just (Entity uid _) -> Authenticated uid
+    authPlugins _ = []
+   --    where
+      --      loginPageForm :: Route App -> Widget
+        --    loginPageForm action = do
+            --        mmsg <- getMessage
+            --        request <- getRequest
+              --      let mtok = reqToken request
+               --     result <- $(whamletFile "templates/SNTemplates/login.hamlet")
+                --    toWidget $(juliusFile "templates/SNTemplates/login.julius")
+                 --   return result                              
 
-    loginHandler = do
-        ma <- liftHandler $ maybeAuthId
-        when (isJust ma) $
-            liftHandler $ redirect HomepageR
-        defaultLoginHandler
+  --  loginHandler = do
+  --      ma <- liftHandler $ maybeAuthId
+  --      when (isJust ma) $
+  --        --  setSession "User_Id" (pack $ show $ fromSqlKey ma)
+  --          liftHandler $ redirect HomepageR
+   --     defaultLoginHandler
 
-    authHttpManager = authHttpManager
+ --   authHttpManager = getAppHttpManager
 
 -- | Access function to determine if a user is logged in.
 isAuthenticated :: Handler AuthResult
 isAuthenticated = do
     muid <- maybeAuthId
     return $ case muid of
-        Nothing -> Unauthorized "You must login to access this page"
+        Nothing -> AuthenticationRequired
         Just _ -> Authorized
 
 instance YesodAuthPersist App
@@ -297,14 +311,14 @@ userForm = renderDivs $ User
              fsTooltip = Nothing,
              fsId = Just "username",
              fsName = Just "username",
-             fsAttrs = [("class","signupunameField")]
+             fsAttrs = [("class","usernameField")]
            }
           passwordSettings = FieldSettings
            { fsLabel = "Password",
              fsTooltip = Nothing,
              fsId = Just "password",
              fsName = Just "password",
-             fsAttrs = [("class","signupPasswordField")]
+             fsAttrs = [("class","passwordField")]
            }
 
 
@@ -336,15 +350,12 @@ getUniqueProfileMessage mKey = do
 createUserRecordAndReturnUserKey :: Maybe (Entity User) -> Text -> Text -> Handler (Key User)
 createUserRecordAndReturnUserKey userEntity uname pass = do
       result <- case userEntity of
-         Nothing -> do
-           let user = User uname ""
-           userPass <- setPassword pass user
-           insertedUser <- runDB $ insertBy $ userPass
-           return $
-             case insertedUser of
-               Left (Entity userid _) -> userid -- newly added user
-               Right userid -> userid -- existing user
-         Just (Entity userId _) -> return userId --existing user
+         Nothing ->
+             liftHandler $ runDB $ insert $ User
+              { userIdent = uname
+              , userPassword = pass
+              }
+         Just (Entity userId _) -> return userId
       return result
 
 
@@ -360,17 +371,26 @@ createMemberRecordAndReturnMemberKey entityMember userId uname = do
       return result
 
 
+--setUserSessionId :: Key User -> Handler ()
+--setUserSessionId userId = setSession "User_Id" (pack $ show $ fromSqlKey userId)
+
 setUserSessionId :: Maybe (Entity User) -> Handler ()
 setUserSessionId userEntity = do
-      result <- case userEntity of
-          Just(Entity userId _) -> setSession "User_Id" (pack $ show $ fromSqlKey userId)
-          Nothing -> deleteSession "User_Id"
-      return result
+   result <- case userEntity of
+        Just(Entity userId _) -> setSession "User_Id" (pack $ show $ fromSqlKey userId)
+        Nothing -> setSession "User_Id" "0"                
+   return result          
+
+
+isSiteUser :: Maybe (Entity User) -> Text -> Handler Bool
+isSiteUser userEntity password = do
+          return $ case userEntity of
+             Nothing -> False
+             Just (Entity _ sqlUser) -> (unpack password) == (unpack (userPassword sqlUser))
 
 
 getUserKey :: Int64 -> Key User
 getUserKey userId = toSqlKey $ userId
-           
 
 
 getMemberId :: Maybe (Text) -> Handler Int64
@@ -409,24 +429,33 @@ getProfileMessage memberName= liftHandler $ runDB $ do
       return profileMessage 
 
 
-addMemberToDB :: Int64 -> Key Member -> Key Member -> Handler Int64
+addMemberToDB :: Int64 -> Key Member -> Key Member -> Handler ()
 addMemberToDB amId mKey addmKey = 
       if amId > 0
         then do
-          a <- liftHandler $ runDB $ insert $ FollowingMembers mKey addmKey
-          return $ fromSqlKey a
-        else do
-          return $ fromSqlKey mKey
+          memberAdded <- runDB $ PersQ.count [FollowingMembersMemberId PersQ.==. mKey, FollowingMembersFollowingMemberId PersQ.==. addmKey]
+          if memberAdded == 0
+            then do
+                _ <- liftHandler $ runDB $ insert $ FollowingMembers mKey addmKey
+                return ()
+            else
+                return ()
+        else
+            return () 
 
 
-removeMemberFromDB :: Int64 -> Key Member -> Key Member -> Handler Int64
+removeMemberFromDB :: Int64 -> Key Member -> Key Member -> Handler ()
 removeMemberFromDB rmId mKey removeMKey = 
       if rmId > 0
         then do
-          liftHandler $ runDB $ deleteWhere [FollowingMembersMemberId PersQ.==. mKey, FollowingMembersFollowingMemberId PersQ.==. removeMKey]
-          return $ fromSqlKey mKey
-        else do
-          return $ fromSqlKey mKey
+          memberExists <- runDB $ PersQ.count [FollowingMembersMemberId PersQ.==. mKey, FollowingMembersFollowingMemberId PersQ.==. removeMKey]
+          if memberExists > 0
+             then do
+               liftHandler $ runDB $ deleteWhere [FollowingMembersMemberId PersQ.==. mKey, FollowingMembersFollowingMemberId PersQ.==. removeMKey]
+             else
+               return ()
+        else
+          return ()
 
 
 getMembers :: Key User -> [Entity Member] -> [Entity Member] -> [Entity Member]-> Key Member -> Handler [Entity Member]
@@ -438,6 +467,7 @@ getMembers uKey mutualMemberEntity flgMemberEntity flwMemberEntity mKey=
         else do
            unfollowingMembers <- getUnFollowingMembers mKey uKey
            return unfollowingMembers 
+
 
 getUnFollowingMembers :: Key Member -> Key User -> Handler [Entity Member]
 getUnFollowingMembers mKey uKey = do
@@ -562,14 +592,18 @@ messageNotUpdated :: Int64
 messageNotUpdated = 0
 
 
-removeMessageFromDB :: Int64 -> Key MemberMessage -> Handler Int64
+removeMessageFromDB :: Int64 -> Key MemberMessage -> Handler ()
 removeMessageFromDB rmId mmKey = 
      if rmId > 0
         then do
-           liftHandler $ runDB $ deleteWhere [MemberMessageId PersQ.==. mmKey]
-           return $ fromSqlKey mmKey
-        else do
-           return $ fromSqlKey mmKey
+           messageExists <- runDB $ PersQ.count [MemberMessageId PersQ.==. mmKey]
+           if messageExists > 0
+             then do
+               liftHandler $ runDB $ deleteWhere [MemberMessageId PersQ.==. mmKey]
+             else
+               return ()
+        else
+           return ()
 
 
 dateFormat :: UTCTime -> String

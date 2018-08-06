@@ -4,7 +4,7 @@
         <li><a href=@{FriendsR}>Friends </a>
         <li><a href=@{MessagesR}>Messages </a>
         <li><a href=@{SettingsR}>Settings </a>
-        <li><a href=@{LoginpageR LogoutR}>Log Out </a>
+        <li><a href=@{LogoutpageR}>Log Out </a>
   
    <div class="message"><h2>Your Messages</h2>
    $if (profileMessage == pack "")
@@ -18,7 +18,7 @@
      <div class="message">
         Public<input type="radio" id="messagetype" name="messagetype" value="no">
         Private<input type="radio" id="messagetype" name="messagetype" value="on" Checked>
-        <input id="submit" type="submit" name="messagetype" value="Post Message">
+        <button id="submit" name="submit">Post Message
    $if Prelude.null messages 
      <div class="info" id="noMessage" >No messages yet
    $else

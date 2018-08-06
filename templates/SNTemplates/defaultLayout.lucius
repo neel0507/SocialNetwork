@@ -43,19 +43,15 @@ div.title {
 
 .loginMessage {margin-left: 40px; margin-top: 10px; color: red;}
 
-.validUser { color: green; display:none;}
-.inValidUser { color: red; display:none;}
+.validUser { color: green; }
+.inValidUser { color: red; }
 
 a:link  { text-decoration   :none;}
 a:hover { color             :#d04;}
 
-.usernameField {margin-left: 5px; margin-top: 5px;}
+.usernameField {margin-left: 10px; margin-top: 5px;}
 
-.passwordField {margin-left: 9px; margin-top: 5px;}
-
-.signupunameField {margin-left: 10px; margin-top: 5px;}
-
-.signupPasswordField {margin-left: 15px; margin-top: 5px;}
+.passwordField {margin-left: 15px; margin-top: 5px;}
 
 .userInput { margin-left: 40px; margin-top: 10px;}
 

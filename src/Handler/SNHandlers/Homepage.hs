@@ -17,4 +17,10 @@ getHomepageR = do
               $(widgetFile "SNTemplates/validUser") --Display welcome message with userame             
         else
             defaultLayout $ do
-              $(widgetFile "SNTemplates/homepage") -- User is not logged in      
+              $(widgetFile "SNTemplates/homepage") -- User is not logged in
+
+getLogoutpageR :: Handler Html
+getLogoutpageR = do
+    deleteSession "User_Id"
+    defaultLayout $ do       
+       $(widgetFile "SNTemplates/homepage")     
