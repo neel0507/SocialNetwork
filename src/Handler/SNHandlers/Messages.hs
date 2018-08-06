@@ -9,11 +9,9 @@ import Text.Julius  (juliusFile)
 
 getMessagesR :: Handler Html
 getMessagesR = do
- uid <- lookupSession "User_Id"     
- loggedInUserId <- getMemberId uid
- if loggedInUserId > 0
-  then do
-   -- (_, user) <- requireAuthPair--Get user details from authentication                   
+    (_, user) <- requireAuthPair--Get user details from authentication
+    request <- getRequest
+    let mtok = reqToken request                   
     eraseMessage <- lookupGetParam "erase" --Is user about to erase their message?
     _ <- case eraseMessage of -- Will be executed when the logged in member decides to erase their message/s
            Just _ -> do --Message to remove
@@ -23,41 +21,28 @@ getMessagesR = do
                  pure ()--Returned, but not used
            Nothing -> 
                  pure ()--Returned, but not used
-    let loggedInUserKey = getUserKey loggedInUserId
-    uniqueMember <- getUniqueMember loggedInUserKey
-    memberName <- getMemberName uniqueMember "Does not exist"
-    profileMessage <- getProfileMessage memberName --Get profile message
-    memberKey <- getViewMemberKey memberName                                                            
+    profileMessage <- getProfileMessage (userIdent user) --Get profile message
+    memberKey <- getViewMemberKey (userIdent user)                                                             
     messages <- getMemberMessages memberKey--Get messages of the logged in member
 
     defaultLayout $ do            
       $(widgetFile "SNTemplates/memberMessages") --template to display when there are messages on the logged in member's messages page
       toWidget $(juliusFile "templates/SNTemplates/messages.julius")--Associated Javascript file
-  else
-    redirect LoginpageR 
 
           
 postMessagesR :: Handler Html
 postMessagesR = do
- uid <- lookupSession "User_Id"     
- userId <- getMemberId uid
- if userId > 0
-  then do
-  --  (userId, user) <- requireAuthPair --Get user details from authentication
-    let loggedInUserKey = getUserKey userId     
-    (msg, msgType, time, liMemberKey) <- getMessageDetails (fromSqlKey loggedInUserKey) --Get message details      
+    (userId, user) <- requireAuthPair --Get user details from authentication    
+    (msg, msgType, time, liMemberKey) <- getMessageDetails (fromSqlKey userId) --Get message details      
     _ <- runDB $ insert $ MemberMessage liMemberKey liMemberKey msgType time msg -- insert the message in the database
-    redirect MessagesR --redirect to where message is posted
-  else
-    redirect LoginpageR                                           
+    redirect MessagesR --redirect to where message is posted                                          
 
 
 getViewMemberMessagesR :: Text -> Handler Html
 getViewMemberMessagesR viewMemberName = do
- uid <- lookupSession "User_Id"     
- userId <- getMemberId uid
- if userId > 0
-  then do
+    (_, _) <- requireAuthPair --Get user details from authentication
+    request <- getRequest
+    let mtok = reqToken request
     validMember <- runDB $ PersQ.count [MemberIdent PersQ.==. viewMemberName] --Identify if it is a valid user
     if validMember > 0
        then do            
@@ -73,21 +58,13 @@ getViewMemberMessagesR viewMemberName = do
               [whamlet|
                  Member does not exist
               |]
-  else
-      redirect LoginpageR
 
 postViewMemberMessagesR :: Text -> Handler Html
 postViewMemberMessagesR viewMemberName = do
- uid <- lookupSession "User_Id"     
- userId <- getMemberId uid
- if userId > 0
-  then do
-  --  (userId, user) <- requireAuthPair --Get user details from authentication
-    let loggedInUserKey = getUserKey userId
+    (userId, user) <- requireAuthPair --Get user details from authentication
     viewMemberKey <- getViewMemberKey viewMemberName      
-    (msg, msgType, time, liMemberKey) <- getMessageDetails (fromSqlKey loggedInUserKey) --Get message details
+    (msg, msgType, time, liMemberKey) <- getMessageDetails (fromSqlKey userId) --Get message details
     _ <- runDB $ insert $ MemberMessage viewMemberKey liMemberKey msgType time msg --insert the message in the database
     redirect $ ViewMemberMessagesR viewMemberName --redirect to where message is posted
-  else
-      redirect LoginpageR
+
 

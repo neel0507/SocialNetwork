@@ -4,7 +4,7 @@
         <li><a href=@{FriendsR}>Friends </a>
         <li><a href=@{MessagesR}>Messages </a>
         <li><a href=@{SettingsR}>Settings </a>
-        <li><a href=@{LogoutpageR}>Log Out </a>
+        <li><a href=@{AuthR LogoutR}>Log Out </a>
    <br>
    <div class="message"><p>#{viewMemberName}&#39;s Profile</p>
    $if (viewMemberMessage == pack "")

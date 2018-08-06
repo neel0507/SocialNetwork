@@ -11,8 +11,6 @@
 / HomeR GET POST
 
 /comments CommentR POST
-/login LoginpageR GET POST
-/logout LogoutpageR GET
 /profile ProfileR GET
 /home HomepageR GET
 /signup SignupR GET POST

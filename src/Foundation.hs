@@ -116,7 +116,7 @@ instance Yesod App where
     -- To add it, chain it together with the defaultMiddleware: yesodMiddleware = defaultYesodMiddleware . defaultCsrfMiddleware
     -- For details, see the CSRF documentation in the Yesod.Core.Handler module of the yesod-core package.
     yesodMiddleware :: ToTypedContent res => Handler res -> Handler res
-    yesodMiddleware = defaultYesodMiddleware
+    yesodMiddleware = defaultYesodMiddleware Prelude.. defaultCsrfMiddleware
 
     defaultLayout :: Widget -> Handler Html
     defaultLayout widget = do
@@ -167,8 +167,6 @@ instance Yesod App where
     isAuthorized HomeR _ = return Authorized
     isAuthorized HomepageR _ = return Authorized
     isAuthorized SignupR _ = return Authorized
-    isAuthorized LoginpageR _ = return Authorized
-    isAuthorized LogoutpageR _ = return Authorized
     isAuthorized FaviconR _ = return Authorized
     isAuthorized MainImageR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
@@ -177,13 +175,13 @@ instance Yesod App where
     isAuthorized (LoginVerifyUserR _) _ = return Authorized
     -- the profile route requires that the user is authenticated, so we
     -- delegate to that function
-    isAuthorized ProfileR _ = return Authorized
-    isAuthorized MembersR _ = return Authorized
-    isAuthorized FriendsR _ = return Authorized
-    isAuthorized MessagesR _ = return Authorized
-    isAuthorized SettingsR _ = return Authorized
-    isAuthorized (ViewMemberR _) _ = return Authorized
-    isAuthorized (ViewMemberMessagesR _) _ = return Authorized
+    isAuthorized ProfileR _ = isAuthenticated
+    isAuthorized MembersR _ = isAuthenticated
+    isAuthorized FriendsR _ = isAuthenticated
+    isAuthorized MessagesR _ = isAuthenticated
+    isAuthorized SettingsR _ = isAuthenticated
+    isAuthorized (ViewMemberR _) _ = isAuthenticated
+    isAuthorized (ViewMemberMessagesR _) _ = isAuthenticated
     -- This function creates static content files in the static folder
     -- and names them based on a hash of their content. This allows
     -- expiration dates to be set far in the future without worry of
@@ -248,38 +246,37 @@ instance YesodAuth App where
          deleteSession "User_Id"
     -- Override the above two destinations when a Referer: header is present
     redirectToReferer :: App -> Bool
-    redirectToReferer _ = True
+    redirectToReferer _ = False
 
- --   authenticate creds = liftHandler $ runDB $ do
-  --      x <- getBy $ UniqueUser $ credsIdent creds
-   --     _ <- case x of
-     --       Nothing -> pure ()
-      --      Just (Entity uid _) -> liftHandler $ setUserSessionId uid
-    --    return $ case x of
-       --     Nothing -> UserError InvalidLogin
-        --    Just (Entity uid _) -> Authenticated uid
+    authenticate creds = liftHandler $ runDB $ do
+        x <- getBy $ UniqueUser $ credsIdent creds
+        _ <- case x of
+            Nothing -> pure ()
+            Just (Entity uid _) -> liftHandler $ setUserSessionId uid
+        return $ case x of
+            Nothing -> UserError InvalidLogin
+            Just (Entity uid _) -> Authenticated uid
 
     -- You can add other plugins like BrowserID, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
-    authPlugins _ = []
-   --    where
-      --      loginPageForm :: Route App -> Widget
-        --    loginPageForm action = do
-            --        mmsg <- getMessage
-            --        request <- getRequest
-              --      let mtok = reqToken request
-               --     result <- $(whamletFile "templates/SNTemplates/login.hamlet")
-                --    toWidget $(juliusFile "templates/SNTemplates/login.julius")
-                 --   return result                              
+    authPlugins _ = [authHashDBWithForm loginPageForm (Just Prelude.. UniqueUser)]
+       where
+            loginPageForm :: Route App -> Widget
+            loginPageForm action = do
+                    mmsg <- getMessage
+                    request <- getRequest
+                    let mtok = reqToken request
+                    result <- $(whamletFile "templates/SNTemplates/login.hamlet")
+                    toWidget $(juliusFile "templates/SNTemplates/login.julius")
+                    return result                             
 
-  --  loginHandler = do
-  --      ma <- liftHandler $ maybeAuthId
-  --      when (isJust ma) $
-  --        --  setSession "User_Id" (pack $ show $ fromSqlKey ma)
-  --          liftHandler $ redirect HomepageR
-   --     defaultLoginHandler
+    loginHandler = do
+        ma <- liftHandler $ maybeAuthId
+        when (isJust ma) $
+           liftHandler $ redirect HomepageR
+        defaultLoginHandler
 
- --   authHttpManager = getAppHttpManager
+    authHttpManager = getAppHttpManager
 
 -- | Access function to determine if a user is logged in.
 isAuthenticated :: Handler AuthResult
@@ -350,12 +347,15 @@ getUniqueProfileMessage mKey = do
 createUserRecordAndReturnUserKey :: Maybe (Entity User) -> Text -> Text -> Handler (Key User)
 createUserRecordAndReturnUserKey userEntity uname pass = do
       result <- case userEntity of
-         Nothing ->
-             liftHandler $ runDB $ insert $ User
-              { userIdent = uname
-              , userPassword = pass
-              }
-         Just (Entity userId _) -> return userId
+         Nothing -> do
+           let user = User uname ""
+           userPass <- setPassword pass user
+           insertedUser <- runDB $ insertBy $ userPass
+           return $
+             case insertedUser of
+               Left (Entity userid _) -> userid -- newly added user
+               Right userid -> userid -- existing user
+         Just (Entity userId _) -> return userId --existing user
       return result
 
 
@@ -371,22 +371,8 @@ createMemberRecordAndReturnMemberKey entityMember userId uname = do
       return result
 
 
---setUserSessionId :: Key User -> Handler ()
---setUserSessionId userId = setSession "User_Id" (pack $ show $ fromSqlKey userId)
-
-setUserSessionId :: Maybe (Entity User) -> Handler ()
-setUserSessionId userEntity = do
-   result <- case userEntity of
-        Just(Entity userId _) -> setSession "User_Id" (pack $ show $ fromSqlKey userId)
-        Nothing -> setSession "User_Id" "0"                
-   return result          
-
-
-isSiteUser :: Maybe (Entity User) -> Text -> Handler Bool
-isSiteUser userEntity password = do
-          return $ case userEntity of
-             Nothing -> False
-             Just (Entity _ sqlUser) -> (unpack password) == (unpack (userPassword sqlUser))
+setUserSessionId :: Key User -> Handler ()
+setUserSessionId userId = setSession "User_Id" (pack $ show $ fromSqlKey userId)
 
 
 getUserKey :: Int64 -> Key User

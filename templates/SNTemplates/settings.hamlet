@@ -4,13 +4,15 @@
         <li><a href=@{FriendsR}>Friends </a>
         <li><a href=@{MessagesR}>Messages </a>
         <li><a href=@{SettingsR}>Settings </a>
-        <li><a href=@{LogoutpageR}>Log Out </a>
+        <li><a href=@{AuthR LogoutR}>Log Out </a>
    <br>
    $if (message == pack "")
       <div class="message">Your profile message: No message yet
    $else
       <div class="message">Your profile message: #{message}
    <div class="message"><h2>Enter profile message:</h2>
-   <form method="POST" action="/settings">   
+   <form method="POST" action="/settings">
+      $maybe tok <- mtok
+         <input type=hidden name=#{defaultCsrfParamName} value=#{tok}>   
       <div class="message"><textarea id="txtarea" name="txtarea" rows="4" cols="40" style="resize: none;"></textarea>
       <div class="message"><button name="submit" id="submit">Save Profile

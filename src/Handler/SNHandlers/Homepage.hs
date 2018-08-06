@@ -18,9 +18,3 @@ getHomepageR = do
         else
             defaultLayout $ do
               $(widgetFile "SNTemplates/homepage") -- User is not logged in
-
-getLogoutpageR :: Handler Html
-getLogoutpageR = do
-    deleteSession "User_Id"
-    defaultLayout $ do       
-       $(widgetFile "SNTemplates/homepage")     

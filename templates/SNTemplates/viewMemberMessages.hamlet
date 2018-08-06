@@ -4,7 +4,7 @@
         <li><a href=@{FriendsR}>Friends </a>
         <li><a href=@{MessagesR}>Messages </a>
         <li><a href=@{SettingsR}>Settings </a>
-        <li><a href=@{LogoutpageR}>Log Out </a>
+        <li><a href=@{AuthR LogoutR}>Log Out </a>
   
    <div class="message"><h2>#{viewMemberName}&#39;s Messages</h2>
    $if (viewMemberMessage == pack "")
@@ -14,6 +14,8 @@
    <br>
    <div class="message">Type here to leave a message:
    <form method="POST" action=@{ViewMemberMessagesR viewMemberName}>
+     $maybe tok <- mtok
+         <input type=hidden name=#{defaultCsrfParamName} value=#{tok}>
      <div class="message"><textarea id="txtarea" name="txtarea" rows="4" cols="40" style="resize: none;"></textarea>
      <div class="message">
         Public<input type="radio" id="messagetype" name="messagetype" value="no">
