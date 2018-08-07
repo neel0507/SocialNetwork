@@ -28,10 +28,10 @@ getMembersR = do
             Nothing -> return ()
 
     let userKey = getUserKey loggedInUserId --Get entity user key of the logged in user
-    mutualMembers <- getMutualMembers memberKey
+    mutualMembers <- getMutualMembers memberKey --Get the mutual members of the user
     followingMembers <- getFollowingMembers memberKey-- Get the following members of the user
-    followers <- getFollowers memberKey                  
-    members <- getMembers userKey mutualMembers followingMembers followers memberKey      
+    followers <- getFollowers memberKey --Get followers of the user                 
+    members <- getMembers userKey mutualMembers followingMembers followers memberKey -- Get members who are not mutual members, following members or followers     
     defaultLayout $ do                
       $(widgetFile "SNTemplates/members") --template to display members of the site                                                     
 
@@ -57,9 +57,9 @@ getFriendsR = do
     (userId, _) <- requireAuthPair --Get user details from authentication
     let loggedInUserId = fromSqlKey userId --Get logged in user id   
     let memberKey = getMemberKey loggedInUserId --Get logged in entity member key
-    mutualMembers <- getMutualMembers memberKey                   
+    mutualMembers <- getMutualMembers memberKey --Get mutual members of the user                  
     followingMembers <- getFollowingMembers memberKey-- Get the following members of the user            
-    followers <- getFollowers memberKey
+    followers <- getFollowers memberKey --Get followers of the user
 
     defaultLayout $ do
        $(widgetFile "SNTemplates/friends") --template to display friends of the logged in user/member
