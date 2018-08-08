@@ -70,13 +70,13 @@ spec = withApp $ do
           statusIs 200
           followingMembers <- runDB $ selectList ([] :: [Filter FollowingMembers]) []
           assertEq "Following members table has one record" 1 $ length followingMembers
-          bodyContains "Neel"
+          bodyContains "Neel1"
           request $ do
              setUrl ("http://localhost:3000/members?add=1" :: Text) --id:1
           followingMembers <- runDB $ selectList ([] :: [Filter FollowingMembers]) []
           assertEq "Following members table has two records" 2 $ length followingMembers
           get FriendsR
           htmlAnyContain "h2" "Mutual Friends"
-          htmlAnyContain "li" "Neel"
+          htmlAnyContain "li" "Neel1"
           htmlAnyContain "h2" "You are not following anyone yet, they might be your mutual friend"
           htmlAnyContain "h2" "You are not followed by anyone yet, they might be your mutual friend"
