@@ -3,7 +3,7 @@
 module Handler.SNHandlers.Members where
 
 import Import
-import Database.Persist.Sql as PersQ
+import Database.Persist.Sql
 
 getMembersR :: Handler Html
 getMembersR = do    
@@ -38,8 +38,8 @@ getMembersR = do
 
 getViewMemberR :: Text -> Handler Html
 getViewMemberR viewMemberName = do
-    (userId, _) <- requireAuthPair --Get user details from authentication
-    validMember <- runDB $ PersQ.count [MemberIdent PersQ.==. viewMemberName] --Identify if it is a valid user
+    (_, _) <- requireAuthPair --Get user details from authentication
+    validMember <- getValidMember viewMemberName --Identify if it is a valid user
     if validMember > 0
        then do              
           viewMemberMessage <- getProfileMessage viewMemberName --Get the member message with the help of member name

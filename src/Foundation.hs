@@ -638,6 +638,11 @@ getMessageDetails loggedInUserId= do
     return (message, messageType, time, loggedInMemberKey)
 
 
+getValidMember :: Text -> Handler Int
+getValidMember memberName = do
+       result <- runDB $ PersQ.count [MemberIdent PersQ.==. memberName]
+       return result
+
 -- Note: Some functionality previously present in the scaffolding has been
 -- moved to documentation in the Wiki. Following are some hopefully helpful
 -- links:
